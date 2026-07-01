@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  docker-compose:
+    name: Build & run (docker compose)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build images
+        run: docker compose build
+
+      - name: Start services
+        run: docker compose up -d
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/api/health; then
+              echo "backend healthy"
+              exit 0
+            fi
+            echo "waiting for backend... ($i)"
+            sleep 2
+          done
+          echo "backend did not become healthy"
+          docker compose logs
+          exit 1
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5173/ >/dev/null; then
+              echo "frontend up"
+              exit 0
+            fi
+            echo "waiting for frontend... ($i)"
+            sleep 2
+          done
+          echo "frontend did not come up"
+          docker compose logs
+          exit 1
+
+      - name: Tear down
+        if: always()
+        run: docker compose down
