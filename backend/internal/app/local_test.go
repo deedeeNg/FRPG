@@ -1,18 +1,19 @@
-package auth_test
+package app_test
 
 import (
 	"context"
 	"strings"
 	"testing"
 
-	"frpg-backend/internal/auth"
-	"frpg-backend/internal/users"
+	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/app"
+	"frpg-backend/internal/domain"
 )
 
 // TestSeededUserExists is the "we seeded a user" test: the canonical seed data
 // lands in the repository and is retrievable by email.
 func TestSeededUserExists(t *testing.T) {
-	repo := users.NewInMemorySeeded()
+	repo := adapters.NewInMemorySeeded()
 
 	u, err := repo.GetByEmail(context.Background(), "test@frpg.dev")
 	if err != nil {
@@ -22,20 +23,20 @@ func TestSeededUserExists(t *testing.T) {
 		t.Fatalf("seeded user looks wrong: %+v", u)
 	}
 
-	if _, err := repo.GetByEmail(context.Background(), "nobody@frpg.dev"); err != users.ErrNotFound {
+	if _, err := repo.GetByEmail(context.Background(), "nobody@frpg.dev"); err != domain.ErrNotFound {
 		t.Fatalf("expected ErrNotFound for unknown user, got: %v", err)
 	}
 }
 
 func TestLocalProvider_Authenticate(t *testing.T) {
-	provider := auth.NewLocalProvider(users.NewInMemorySeeded())
+	provider := app.NewLocalProvider(adapters.NewInMemorySeeded())
 
 	cases := []struct {
 		name          string
 		email         string
 		password      string
 		wantAuthed    bool
-		wantReasonSub string // substring expected in the failure reason
+		wantReasonSub string
 	}{
 		{"correct email + correct password", "test@frpg.dev", "password123", true, ""},
 		{"correct email + wrong password", "test@frpg.dev", "nope", false, "wrong password"},
@@ -45,7 +46,7 @@ func TestLocalProvider_Authenticate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := provider.Authenticate(context.Background(), auth.Credential{
+			res, err := provider.Authenticate(context.Background(), domain.Credential{
 				Email:    tc.email,
 				Password: tc.password,
 			})

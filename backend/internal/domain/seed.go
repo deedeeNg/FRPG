@@ -1,4 +1,4 @@
-package users
+package domain
 
 // SeedUsers is the single source of truth for the canonical test users. Both the
 // DynamoDB seeder (cmd/seed) and the unit tests use it, so "the seeded user"

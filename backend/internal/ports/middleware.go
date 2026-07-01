@@ -1,11 +1,11 @@
-package api
+package ports
 
 import (
 	"context"
 	"net/http"
 	"strings"
 
-	"frpg-backend/internal/session"
+	"frpg-backend/internal/domain"
 )
 
 type ctxKey int
@@ -32,8 +32,8 @@ func (s *Server) RequireAuth(next http.Handler) http.Handler {
 }
 
 // sessionFrom returns the session stored by RequireAuth.
-func sessionFrom(ctx context.Context) (session.Session, bool) {
-	sess, ok := ctx.Value(sessionKey).(session.Session)
+func sessionFrom(ctx context.Context) (domain.Session, bool) {
+	sess, ok := ctx.Value(sessionKey).(domain.Session)
 	return sess, ok
 }
 

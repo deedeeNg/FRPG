@@ -1,4 +1,4 @@
-package users
+package adapters
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
+	"frpg-backend/internal/domain"
 )
 
 // dynamoAPI is the slice of the DynamoDB client this repo needs (easy to fake).
@@ -16,7 +18,7 @@ type dynamoAPI interface {
 	PutItem(ctx context.Context, in *dynamodb.PutItemInput, opts ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
 }
 
-// Dynamo is a Repository backed by DynamoDB (local or AWS).
+// Dynamo is a domain.Repository backed by DynamoDB (local or AWS).
 type Dynamo struct {
 	client dynamoAPI
 	table  string
@@ -27,7 +29,7 @@ func NewDynamo(client *dynamodb.Client, table string) *Dynamo {
 	return &Dynamo{client: client, table: table}
 }
 
-func (r *Dynamo) GetByEmail(ctx context.Context, email string) (User, error) {
+func (r *Dynamo) GetByEmail(ctx context.Context, email string) (domain.User, error) {
 	out, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.table),
 		Key: map[string]types.AttributeValue{
@@ -35,19 +37,19 @@ func (r *Dynamo) GetByEmail(ctx context.Context, email string) (User, error) {
 		},
 	})
 	if err != nil {
-		return User{}, err
+		return domain.User{}, err
 	}
 	if out.Item == nil {
-		return User{}, ErrNotFound
+		return domain.User{}, domain.ErrNotFound
 	}
-	var u User
+	var u domain.User
 	if err := attributevalue.UnmarshalMap(out.Item, &u); err != nil {
-		return User{}, err
+		return domain.User{}, err
 	}
 	return u, nil
 }
 
-func (r *Dynamo) Put(ctx context.Context, u User) error {
+func (r *Dynamo) Put(ctx context.Context, u domain.User) error {
 	if u.Email == "" {
 		return errors.New("user email is required")
 	}

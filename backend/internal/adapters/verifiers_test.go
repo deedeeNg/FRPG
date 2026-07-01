@@ -1,4 +1,4 @@
-package auth_test
+package adapters_test
 
 import (
 	"context"
@@ -6,13 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"frpg-backend/internal/auth"
+	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/domain"
 )
 
 // These tests point the real verifiers at an httptest server that mimics
-// Google's tokeninfo / Facebook's Graph API. That exercises the real HTTP
-// request building, JSON decoding, and audience check — everything except
-// actually reaching Google/Facebook.
+// Google's tokeninfo / Facebook's Graph API — exercising the real HTTP request
+// building, JSON decoding, and audience check without reaching the network.
 
 func TestGoogleVerifier_Verify(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,8 +26,8 @@ func TestGoogleVerifier_Verify(t *testing.T) {
 	defer srv.Close()
 
 	t.Run("valid token with matching audience", func(t *testing.T) {
-		v := auth.GoogleVerifier{TokenInfoURL: srv.URL, Audience: "my-client-id"}
-		got, err := v.Verify(context.Background(), auth.Credential{Token: "good"})
+		v := adapters.GoogleVerifier{TokenInfoURL: srv.URL, Audience: "my-client-id"}
+		got, err := v.Verify(context.Background(), domain.Credential{Token: "good"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -37,15 +37,15 @@ func TestGoogleVerifier_Verify(t *testing.T) {
 	})
 
 	t.Run("audience mismatch is rejected", func(t *testing.T) {
-		v := auth.GoogleVerifier{TokenInfoURL: srv.URL, Audience: "someone-elses-client-id"}
-		if _, err := v.Verify(context.Background(), auth.Credential{Token: "good"}); err == nil {
+		v := adapters.GoogleVerifier{TokenInfoURL: srv.URL, Audience: "someone-elses-client-id"}
+		if _, err := v.Verify(context.Background(), domain.Credential{Token: "good"}); err == nil {
 			t.Fatal("expected audience mismatch error")
 		}
 	})
 
 	t.Run("missing token errors before any call", func(t *testing.T) {
-		v := auth.GoogleVerifier{TokenInfoURL: srv.URL}
-		if _, err := v.Verify(context.Background(), auth.Credential{}); err == nil {
+		v := adapters.GoogleVerifier{TokenInfoURL: srv.URL}
+		if _, err := v.Verify(context.Background(), domain.Credential{}); err == nil {
 			t.Fatal("expected error for empty token")
 		}
 	})
@@ -55,8 +55,8 @@ func TestGoogleVerifier_Verify(t *testing.T) {
 			http.Error(w, "nope", http.StatusUnauthorized)
 		}))
 		defer down.Close()
-		v := auth.GoogleVerifier{TokenInfoURL: down.URL}
-		if _, err := v.Verify(context.Background(), auth.Credential{Token: "x"}); err == nil {
+		v := adapters.GoogleVerifier{TokenInfoURL: down.URL}
+		if _, err := v.Verify(context.Background(), domain.Credential{Token: "x"}); err == nil {
 			t.Fatal("expected error for non-200 response")
 		}
 	})
@@ -74,8 +74,8 @@ func TestFacebookVerifier_Verify(t *testing.T) {
 	defer srv.Close()
 
 	t.Run("valid access token returns profile", func(t *testing.T) {
-		v := auth.FacebookVerifier{GraphURL: srv.URL}
-		got, err := v.Verify(context.Background(), auth.Credential{Token: "good"})
+		v := adapters.FacebookVerifier{GraphURL: srv.URL}
+		got, err := v.Verify(context.Background(), domain.Credential{Token: "good"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -85,8 +85,8 @@ func TestFacebookVerifier_Verify(t *testing.T) {
 	})
 
 	t.Run("missing token errors", func(t *testing.T) {
-		v := auth.FacebookVerifier{GraphURL: srv.URL}
-		if _, err := v.Verify(context.Background(), auth.Credential{}); err == nil {
+		v := adapters.FacebookVerifier{GraphURL: srv.URL}
+		if _, err := v.Verify(context.Background(), domain.Credential{}); err == nil {
 			t.Fatal("expected error for empty token")
 		}
 	})

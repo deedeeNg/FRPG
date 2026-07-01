@@ -1,12 +1,12 @@
-package api
+package ports
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 
-	"frpg-backend/internal/auth"
+	"frpg-backend/internal/app"
+	"frpg-backend/internal/domain"
 )
 
 // handleLogin authenticates an email/password against the local provider.
@@ -18,7 +18,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	token, err := auth.Login(r.Context(), s.Local, auth.Credential{
+	token, err := app.Login(r.Context(), s.Local, domain.Credential{
 		Email:    body.Email,
 		Password: body.Password,
 	}, s.mint)
@@ -26,9 +26,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleOAuth returns a handler that authenticates a social token against the
-// given provider. The frontend posts the id/access token it received from
-// Google/Facebook; the backend verifies it and issues our own session.
-func (s *Server) handleOAuth(provider auth.IdentityProvider) http.HandlerFunc {
+// given provider.
+func (s *Server) handleOAuth(provider domain.IdentityProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if provider == nil {
 			writeError(w, http.StatusNotImplemented, "provider not configured")
@@ -40,7 +39,7 @@ func (s *Server) handleOAuth(provider auth.IdentityProvider) http.HandlerFunc {
 		if !decodeJSON(w, r, &body) {
 			return
 		}
-		token, err := auth.Login(r.Context(), provider, auth.Credential{Token: body.Token}, s.mint)
+		token, err := app.Login(r.Context(), provider, domain.Credential{Token: body.Token}, s.mint)
 		s.writeLogin(w, token, err)
 	}
 }
@@ -49,7 +48,7 @@ func (s *Server) handleOAuth(provider auth.IdentityProvider) http.HandlerFunc {
 // 401 for bad credentials, 500 for anything else.
 func (s *Server) writeLogin(w http.ResponseWriter, token string, err error) {
 	if err != nil {
-		var unauth *auth.ErrUnauthenticated
+		var unauth *domain.ErrUnauthenticated
 		if errors.As(err, &unauth) {
 			writeError(w, http.StatusUnauthorized, unauth.Reason)
 			return
@@ -59,12 +58,4 @@ func (s *Server) writeLogin(w http.ResponseWriter, token string, err error) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
-}
-
-func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
-	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return false
-	}
-	return true
 }

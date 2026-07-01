@@ -1,4 +1,4 @@
-package api_test
+package ports_test
 
 import (
 	"encoding/json"
@@ -8,19 +8,19 @@ import (
 	"testing"
 	"time"
 
-	"frpg-backend/internal/api"
-	"frpg-backend/internal/auth"
-	"frpg-backend/internal/session"
-	"frpg-backend/internal/users"
+	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/app"
+	"frpg-backend/internal/domain"
+	"frpg-backend/internal/ports"
 )
 
-func newTestServer() *api.Server {
-	repo := users.NewInMemorySeeded()
-	return &api.Server{
-		Local:    auth.NewLocalProvider(repo),
-		Google:   auth.Allow(auth.Identity{UserID: "u_google_1", Email: "googler@frpg.dev", Provider: "google"}),
-		Facebook: auth.Deny("facebook not linked"),
-		Sessions: session.NewManager("test-secret", time.Hour),
+func newTestServer() *ports.Server {
+	repo := adapters.NewInMemorySeeded()
+	return &ports.Server{
+		Local:    app.NewLocalProvider(repo),
+		Google:   app.Allow(domain.Identity{UserID: "u_google_1", Email: "googler@frpg.dev", Provider: "google"}),
+		Facebook: app.Deny("facebook not linked"),
+		Sessions: adapters.NewSessionManager("test-secret", time.Hour),
 	}
 }
 

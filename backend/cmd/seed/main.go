@@ -1,5 +1,5 @@
 // Command seed creates the Users table in DynamoDB (local or AWS) and inserts
-// the canonical test users. It shares users.SeedUsers() with the unit tests, so
+// the canonical test users. It shares domain.SeedUsers() with the unit tests, so
 // "the seeded user" is identical in tests and in the database.
 //
 //	docker compose --profile seed up dynamo-seed
@@ -18,7 +18,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	"frpg-backend/internal/users"
+	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/domain"
 )
 
 func main() {
@@ -42,8 +43,8 @@ func main() {
 		log.Fatalf("ensure table: %v", err)
 	}
 
-	repo := users.NewDynamo(client, table)
-	for _, u := range users.SeedUsers() {
+	repo := adapters.NewDynamo(client, table)
+	for _, u := range domain.SeedUsers() {
 		if err := repo.Put(ctx, u); err != nil {
 			log.Fatalf("put %s: %v", u.Email, err)
 		}
