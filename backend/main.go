@@ -1,41 +1,71 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+
+	"frpg-backend/internal/api"
+	"frpg-backend/internal/auth"
+	"frpg-backend/internal/session"
+	"frpg-backend/internal/users"
 )
 
-// jsonResponse is a small helper, similar to res.json() in Express.
-func jsonResponse(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
-}
-
 func main() {
-	// Go 1.22's http.ServeMux supports method + pattern routing,
-	// giving us an Express-like `app.get("/path", handler)` feel.
-	mux := http.NewServeMux()
+	ctx := context.Background()
 
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		jsonResponse(w, http.StatusOK, map[string]string{
-			"message": "FRPG backend is running",
-		})
-	})
+	repo := buildRepo(ctx)
+	sessions := session.NewManager(envOr("SESSION_SECRET", devSecret()), 24*time.Hour)
 
-	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
-		jsonResponse(w, http.StatusOK, map[string]string{"status": "ok"})
-	})
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	server := &api.Server{
+		Local:    auth.NewLocalProvider(repo),
+		Google:   auth.NewGoogleProvider(os.Getenv("GOOGLE_CLIENT_ID"), repo),
+		Facebook: auth.NewFacebookProvider(repo),
+		Sessions: sessions,
 	}
 
+	port := envOr("PORT", "8080")
 	log.Printf("backend listening on :%s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	if err := http.ListenAndServe(":"+port, server.Routes()); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// buildRepo returns a DynamoDB-backed repository when AWS/DynamoDB is configured,
+// and an in-memory seeded repository otherwise so the server runs offline in dev.
+func buildRepo(ctx context.Context) users.Repository {
+	endpoint := os.Getenv("DYNAMODB_ENDPOINT")
+	if endpoint == "" && os.Getenv("AWS_REGION") == "" {
+		log.Println("no DynamoDB configured; using in-memory seeded repo (dev only)")
+		return users.NewInMemorySeeded()
+	}
+
+	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(envOr("AWS_REGION", "local")))
+	if err != nil {
+		log.Fatalf("load aws config: %v", err)
+	}
+	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
+		if endpoint != "" {
+			o.BaseEndpoint = aws.String(endpoint)
+		}
+	})
+	return users.NewDynamo(client, envOr("USERS_TABLE", "Users"))
+}
+
+func devSecret() string {
+	log.Println("SESSION_SECRET not set; using an insecure dev secret")
+	return "dev-insecure-secret-change-me"
+}
+
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
