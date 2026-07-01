@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Frontend build output
+frontend/dist/
+dist/
+
+# Go build output / binaries
+backend/server
+*.exe
+*.test
+*.out
+
+# Env files
+.env
+.env.local
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
