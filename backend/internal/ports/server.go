@@ -5,26 +5,25 @@ package ports
 import (
 	"net/http"
 
+	"frpg-backend/internal/app"
 	"frpg-backend/internal/domain"
 )
 
-// Server holds the HTTP handlers' dependencies as domain ports, injected by the
-// service layer in production and by fakes/mocks in tests.
+// Server holds the HTTP handlers' dependencies, injected by the service layer in
+// production and by fakes in tests. Identity is the provider registry, so a
+// single route handles local/google/facebook.
 type Server struct {
-	Local    domain.IdentityProvider
-	Google   domain.IdentityProvider
-	Facebook domain.IdentityProvider
+	Identity *app.Manager
 	Sessions domain.SessionManager
 }
 
-// Routes builds the request router (Go 1.22 method+pattern routing).
+// Routes builds the request router (Go 1.22 method+pattern routing). One
+// endpoint fronts every provider: POST /auth/{provider} (local|google|facebook).
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/health", s.handleHealth)
-	mux.HandleFunc("POST /auth/login", s.handleLogin)
-	mux.HandleFunc("POST /auth/oauth/google", s.handleOAuth(s.Google))
-	mux.HandleFunc("POST /auth/oauth/facebook", s.handleOAuth(s.Facebook))
+	mux.HandleFunc("POST /auth/{provider}", s.handleAuth)
 	mux.Handle("GET /api/me", s.RequireAuth(http.HandlerFunc(s.handleMe)))
 
 	return mux

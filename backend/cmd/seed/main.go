@@ -18,7 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/adapters/dynamo"
 	"frpg-backend/internal/domain"
 )
 
@@ -43,7 +43,7 @@ func main() {
 		log.Fatalf("ensure table: %v", err)
 	}
 
-	repo := adapters.NewDynamo(client, table)
+	repo := dynamo.New(client, table)
 	for _, u := range domain.SeedUsers() {
 		if err := repo.Put(ctx, u); err != nil {
 			log.Fatalf("put %s: %v", u.Email, err)

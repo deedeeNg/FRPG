@@ -9,45 +9,38 @@ import (
 	"frpg-backend/internal/domain"
 )
 
-// handleLogin authenticates an email/password against the local provider.
-func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+// handleAuth authenticates against the provider named in the path
+// (POST /auth/{provider}). It decodes a superset body and lets each provider
+// read only the fields it needs (local: email/password; social: token), so no
+// per-provider branching is required.
+func (s *Server) handleAuth(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("provider")
+
 	var body struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Token    string `json:"token"`
 	}
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	token, err := app.Login(r.Context(), s.Local, domain.Credential{
+
+	token, err := s.Identity.Login(r.Context(), name, domain.Credential{
 		Email:    body.Email,
 		Password: body.Password,
+		Token:    body.Token,
 	}, s.mint)
-	s.writeLogin(w, token, err)
-}
-
-// handleOAuth returns a handler that authenticates a social token against the
-// given provider.
-func (s *Server) handleOAuth(provider domain.IdentityProvider) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if provider == nil {
-			writeError(w, http.StatusNotImplemented, "provider not configured")
-			return
-		}
-		var body struct {
-			Token string `json:"token"`
-		}
-		if !decodeJSON(w, r, &body) {
-			return
-		}
-		token, err := app.Login(r.Context(), provider, domain.Credential{Token: body.Token}, s.mint)
-		s.writeLogin(w, token, err)
-	}
+	s.writeLogin(w, name, token, err)
 }
 
 // writeLogin maps a Login outcome to an HTTP response: 200 with a session token,
-// 401 for bad credentials, 500 for anything else.
-func (s *Server) writeLogin(w http.ResponseWriter, token string, err error) {
+// 404 for an unknown provider, 401 for bad credentials, 500 for anything else.
+func (s *Server) writeLogin(w http.ResponseWriter, provider, token string, err error) {
 	if err != nil {
+		if errors.Is(err, app.ErrUnknownProvider) {
+			writeError(w, http.StatusNotFound, "unknown provider: "+provider)
+			return
+		}
 		var unauth *domain.ErrUnauthenticated
 		if errors.As(err, &unauth) {
 			writeError(w, http.StatusUnauthorized, unauth.Reason)

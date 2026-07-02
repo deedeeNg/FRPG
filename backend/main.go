@@ -6,10 +6,19 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/joho/godotenv"
+
 	"frpg-backend/internal/service"
 )
 
 func main() {
+	// Load backend/.env in local dev. In production the file is absent and this
+	// is a no-op — config comes from the platform's environment. Load never
+	// overrides variables already set in the environment.
+	if err := godotenv.Load(); err == nil {
+		log.Println("loaded .env")
+	}
+
 	server := service.NewServer(context.Background())
 
 	port := envOr("PORT", "8080")

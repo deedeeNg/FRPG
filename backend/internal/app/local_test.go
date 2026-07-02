@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/adapters/inmem"
 	"frpg-backend/internal/app"
 	"frpg-backend/internal/domain"
 )
@@ -13,7 +13,7 @@ import (
 // TestSeededUserExists is the "we seeded a user" test: the canonical seed data
 // lands in the repository and is retrievable by email.
 func TestSeededUserExists(t *testing.T) {
-	repo := adapters.NewInMemorySeeded()
+	repo := inmem.NewSeeded()
 
 	u, err := repo.GetByEmail(context.Background(), "test@frpg.dev")
 	if err != nil {
@@ -29,7 +29,7 @@ func TestSeededUserExists(t *testing.T) {
 }
 
 func TestLocalProvider_Authenticate(t *testing.T) {
-	provider := app.NewLocalProvider(adapters.NewInMemorySeeded())
+	provider := app.NewLocalProvider(inmem.NewSeeded())
 
 	cases := []struct {
 		name          string

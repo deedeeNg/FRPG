@@ -2,3 +2,5 @@ Dockerfile
 .dockerignore
 *.md
 .git
+.env
+.env.*

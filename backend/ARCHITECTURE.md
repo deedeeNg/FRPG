@@ -32,6 +32,36 @@ Everything points at `domain`; nothing points outward. If an inner layer needs a
 outer capability, it defines a **port interface in `domain`** and the outer layer
 implements it.
 
+## What each layer is for (plain language)
+
+Read outermost → innermost:
+
+- **`ports` — the front door (HTTP).** Receives requests from the frontend and returns
+  responses; pure translation (JSON/status codes in and out). Holds no auth rules.
+  It's the closest layer to "where the user interacts," but the user only reaches it
+  *through* the React frontend.
+- **`app` — the hidden business logic.** The use cases (`Login`, the providers). This
+  is where the actual decisions happen ("wrong password → rejected"). The user never
+  sees it, and it knows nothing about HTTP.
+- **`domain` — the core: nouns + contracts.** Entities (`User`, `Identity`, …) and the
+  **interfaces** (`Repository`, `ProfileVerifier`, `SessionManager`). The system's
+  vocabulary and rulebook. Depends on nothing.
+- **`adapters` — the concrete edges.** Implementations of the domain interfaces that
+  touch the outside world: `Dynamo` (AWS), `Google`/`Facebook` verifiers, JWT signer,
+  plus the in-memory test repo.
+- **`service` — the wiring.** Picks which adapters to use and assembles the server.
+
+**Who calls whom:** `frontend → ports → app → domain interfaces → (adapters at
+runtime)`. If you ever think "the user sees `app`," re-run that chain — the user is
+two hops above it.
+
+**Two things that confuse everyone:**
+1. **`app` is not user-facing.** It's deep inside; `ports` is the entry point and the
+   React frontend is the actual UI.
+2. **The decoupling lives in `domain`'s interfaces, not the `ports/` folder.** The
+   folder named `ports/` is just HTTP; the hexagonal "ports" (interfaces) live in
+   `domain`. It's an unfortunate name collision from the wild-workouts convention.
+
 ## Package call graph
 
 ```mermaid

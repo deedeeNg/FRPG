@@ -1,4 +1,5 @@
-package adapters
+// Package dynamo implements domain.Repository on DynamoDB (local or AWS).
+package dynamo
 
 import (
 	"context"
@@ -12,24 +13,24 @@ import (
 	"frpg-backend/internal/domain"
 )
 
-// dynamoAPI is the slice of the DynamoDB client this repo needs (easy to fake).
-type dynamoAPI interface {
+// api is the slice of the DynamoDB client this repo needs (easy to fake).
+type api interface {
 	GetItem(ctx context.Context, in *dynamodb.GetItemInput, opts ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
 	PutItem(ctx context.Context, in *dynamodb.PutItemInput, opts ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
 }
 
-// Dynamo is a domain.Repository backed by DynamoDB (local or AWS).
-type Dynamo struct {
-	client dynamoAPI
+// Repository is a domain.Repository backed by DynamoDB.
+type Repository struct {
+	client api
 	table  string
 }
 
-// NewDynamo builds a Dynamo repository around a DynamoDB client.
-func NewDynamo(client *dynamodb.Client, table string) *Dynamo {
-	return &Dynamo{client: client, table: table}
+// New builds a Dynamo repository around a DynamoDB client.
+func New(client *dynamodb.Client, table string) *Repository {
+	return &Repository{client: client, table: table}
 }
 
-func (r *Dynamo) GetByEmail(ctx context.Context, email string) (domain.User, error) {
+func (r *Repository) GetByEmail(ctx context.Context, email string) (domain.User, error) {
 	out, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.table),
 		Key: map[string]types.AttributeValue{
@@ -49,7 +50,7 @@ func (r *Dynamo) GetByEmail(ctx context.Context, email string) (domain.User, err
 	return u, nil
 }
 
-func (r *Dynamo) Put(ctx context.Context, u domain.User) error {
+func (r *Repository) Put(ctx context.Context, u domain.User) error {
 	if u.Email == "" {
 		return errors.New("user email is required")
 	}

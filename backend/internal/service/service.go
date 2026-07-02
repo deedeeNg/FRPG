@@ -10,9 +10,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	awsdynamodb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
-	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/adapters/dynamo"
+	"frpg-backend/internal/adapters/facebook"
+	"frpg-backend/internal/adapters/google"
+	"frpg-backend/internal/adapters/inmem"
+	"frpg-backend/internal/adapters/jwt"
 	"frpg-backend/internal/app"
 	"frpg-backend/internal/domain"
 	"frpg-backend/internal/ports"
@@ -21,12 +25,16 @@ import (
 // NewServer builds a fully wired HTTP server from the environment.
 func NewServer(ctx context.Context) *ports.Server {
 	repo := buildRepo(ctx)
-	sessions := adapters.NewSessionManager(envOr("SESSION_SECRET", devSecret()), 24*time.Hour)
+	sessions := jwt.NewManager(envOr("SESSION_SECRET", devSecret()), 24*time.Hour)
+
+	identity := app.NewManager(
+		app.NewLocalProvider(repo),
+		app.NewOAuthProvider("google", google.Verifier{Audience: os.Getenv("GOOGLE_CLIENT_ID")}, repo),
+		app.NewOAuthProvider("facebook", facebook.Verifier{}, repo),
+	)
 
 	return &ports.Server{
-		Local:    app.NewLocalProvider(repo),
-		Google:   app.NewOAuthProvider("google", adapters.GoogleVerifier{Audience: os.Getenv("GOOGLE_CLIENT_ID")}, repo),
-		Facebook: app.NewOAuthProvider("facebook", adapters.FacebookVerifier{}, repo),
+		Identity: identity,
 		Sessions: sessions,
 	}
 }
@@ -37,19 +45,19 @@ func buildRepo(ctx context.Context) domain.Repository {
 	endpoint := os.Getenv("DYNAMODB_ENDPOINT")
 	if endpoint == "" && os.Getenv("AWS_REGION") == "" {
 		log.Println("no DynamoDB configured; using in-memory seeded repo (dev only)")
-		return adapters.NewInMemorySeeded()
+		return inmem.NewSeeded()
 	}
 
 	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(envOr("AWS_REGION", "local")))
 	if err != nil {
 		log.Fatalf("load aws config: %v", err)
 	}
-	client := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
+	client := awsdynamodb.NewFromConfig(cfg, func(o *awsdynamodb.Options) {
 		if endpoint != "" {
 			o.BaseEndpoint = aws.String(endpoint)
 		}
 	})
-	return adapters.NewDynamo(client, envOr("USERS_TABLE", "Users"))
+	return dynamo.New(client, envOr("USERS_TABLE", "Users"))
 }
 
 func devSecret() string {

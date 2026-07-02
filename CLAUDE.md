@@ -35,6 +35,16 @@ Packages under `internal/` are layers, and **dependencies point inward toward `d
 | `service` | composition root: wires adapters into use cases and builds the server. | all |
 | `main` / `cmd/*` | entrypoints. | `service` (+ adapters/domain for tools) |
 
+**Mental model (who calls whom):**
+`frontend → ports (HTTP) → app (use case) → domain interfaces → adapters (at runtime)`.
+- `app` is **hidden business logic**, not user-facing — the user hits `ports`, and the
+  UI is the React frontend, two hops above `app`. If you ever think "the user sees
+  `app`," re-run that chain.
+- The **abstraction/decoupling is the interfaces in `domain`**, not the `ports/` folder.
+  `app` depends on `domain.Repository`, so `adapters.Dynamo` / `InMemory` swap freely.
+- Naming wart: the `ports/` **folder** = HTTP delivery; "ports" the **concept** =
+  interfaces, which live in `domain`.
+
 Rules:
 - **Never import "outward".** `domain` imports nothing internal; `app` and
   `adapters` import only `domain`; `ports` imports `app`+`domain`; only `service`

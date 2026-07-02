@@ -1,4 +1,5 @@
-package adapters
+// Package facebook implements domain.ProfileVerifier for "Continue with Facebook".
+package facebook
 
 import (
 	"context"
@@ -11,18 +12,18 @@ import (
 	"frpg-backend/internal/domain"
 )
 
-// facebookGraphURL returns the profile for a Facebook access token.
-const facebookGraphURL = "https://graph.facebook.com/me"
+// graphURL returns the profile for a Facebook access token.
+const graphURL = "https://graph.facebook.com/me"
 
-// FacebookVerifier is the real domain.ProfileVerifier for "Continue with
-// Facebook". Same interface as GoogleVerifier — only the service it calls differs.
-type FacebookVerifier struct {
+// Verifier is the real domain.ProfileVerifier for Facebook. Same interface as the
+// Google verifier — only the service it calls differs.
+type Verifier struct {
 	HTTPClient *http.Client
 	// GraphURL overrides the Graph endpoint; used by tests.
 	GraphURL string
 }
 
-func (v FacebookVerifier) Verify(ctx context.Context, cred domain.Credential) (domain.ProviderProfile, error) {
+func (v Verifier) Verify(ctx context.Context, cred domain.Credential) (domain.ProviderProfile, error) {
 	if cred.Token == "" {
 		return domain.ProviderProfile{}, errors.New("missing access token")
 	}
@@ -33,7 +34,7 @@ func (v FacebookVerifier) Verify(ctx context.Context, cred domain.Credential) (d
 
 	base := v.GraphURL
 	if base == "" {
-		base = facebookGraphURL
+		base = graphURL
 	}
 	endpoint := base + "?" + url.Values{
 		"fields":       {"id,name,email"},

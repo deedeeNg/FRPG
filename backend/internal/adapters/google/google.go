@@ -1,4 +1,5 @@
-package adapters
+// Package google implements domain.ProfileVerifier for "Sign in with Google".
+package google
 
 import (
 	"context"
@@ -11,14 +12,13 @@ import (
 	"frpg-backend/internal/domain"
 )
 
-// googleTokenInfoURL verifies a Google ID token. A production-hardened setup
-// verifies the JWT signature locally against Google's JWKS; this endpoint is a
-// dependency-free equivalent that is fine to start with. Either way it stays
-// behind domain.ProfileVerifier.
-const googleTokenInfoURL = "https://oauth2.googleapis.com/tokeninfo"
+// tokenInfoURL verifies a Google ID token. A production-hardened setup verifies
+// the JWT signature locally against Google's JWKS; this endpoint is a
+// dependency-free equivalent that is fine to start with.
+const tokenInfoURL = "https://oauth2.googleapis.com/tokeninfo"
 
-// GoogleVerifier is the real domain.ProfileVerifier for "Sign in with Google".
-type GoogleVerifier struct {
+// Verifier is the real domain.ProfileVerifier for Google.
+type Verifier struct {
 	HTTPClient *http.Client
 	// Audience, if set, must equal the token's aud (your OAuth client_id).
 	Audience string
@@ -26,7 +26,7 @@ type GoogleVerifier struct {
 	TokenInfoURL string
 }
 
-func (v GoogleVerifier) Verify(ctx context.Context, cred domain.Credential) (domain.ProviderProfile, error) {
+func (v Verifier) Verify(ctx context.Context, cred domain.Credential) (domain.ProviderProfile, error) {
 	if cred.Token == "" {
 		return domain.ProviderProfile{}, errors.New("missing id token")
 	}
@@ -37,7 +37,7 @@ func (v GoogleVerifier) Verify(ctx context.Context, cred domain.Credential) (dom
 
 	base := v.TokenInfoURL
 	if base == "" {
-		base = googleTokenInfoURL
+		base = tokenInfoURL
 	}
 	endpoint := base + "?" + url.Values{"id_token": {cred.Token}}.Encode()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)

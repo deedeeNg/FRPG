@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"frpg-backend/internal/adapters"
+	"frpg-backend/internal/adapters/inmem"
 	"frpg-backend/internal/app"
 	"frpg-backend/internal/domain"
 )
@@ -22,7 +22,7 @@ func (f fakeVerifier) Verify(context.Context, domain.Credential) (domain.Provide
 }
 
 func TestOAuthProvider_ExistingSocialUser(t *testing.T) {
-	repo := adapters.NewInMemorySeeded() // seed includes googler@frpg.dev (google)
+	repo := inmem.NewSeeded() // seed includes googler@frpg.dev (google)
 	google := app.NewOAuthProvider("google", fakeVerifier{
 		profile: domain.ProviderProfile{
 			ProviderUserID: "google-oauth2|1234567890",
@@ -44,7 +44,7 @@ func TestOAuthProvider_ExistingSocialUser(t *testing.T) {
 }
 
 func TestOAuthProvider_AutoProvisionsNewUser(t *testing.T) {
-	repo := adapters.NewInMemory() // empty: this Google user has never signed in
+	repo := inmem.New() // empty: this Google user has never signed in
 	google := app.NewOAuthProvider("google", fakeVerifier{
 		profile: domain.ProviderProfile{
 			ProviderUserID: "google-oauth2|999",
@@ -71,7 +71,7 @@ func TestOAuthProvider_AutoProvisionsNewUser(t *testing.T) {
 }
 
 func TestOAuthProvider_InvalidToken(t *testing.T) {
-	repo := adapters.NewInMemory()
+	repo := inmem.New()
 	google := app.NewOAuthProvider("google", fakeVerifier{
 		err: errors.New("token rejected"),
 	}, repo)
