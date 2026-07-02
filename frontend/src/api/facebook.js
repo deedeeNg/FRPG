@@ -6,11 +6,16 @@
 // never used in the browser. The app must have Facebook Login + the `email`
 // permission enabled, or the token carries no email and the backend rejects it.
 
+import { loadScript } from './loadScript'
+
 const FB_SRC = 'https://connect.facebook.net/en_US/sdk.js'
 const APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID
 
 let fbReady
 
+// The FB SDK signals readiness via window.fbAsyncInit (where we must call
+// FB.init), not the script's onload — so we resolve there and use loadScript only
+// to inject the tag and surface load errors.
 function loadFb() {
   if (fbReady) return fbReady
   fbReady = new Promise((resolve, reject) => {
@@ -19,13 +24,7 @@ function loadFb() {
       window.FB.init({ appId: APP_ID, cookie: true, xfbml: false, version: 'v21.0' })
       resolve()
     }
-    const s = document.createElement('script')
-    s.src = FB_SRC
-    s.async = true
-    s.defer = true
-    s.crossOrigin = 'anonymous'
-    s.onerror = () => reject(new Error('Failed to load Facebook SDK'))
-    document.head.appendChild(s)
+    loadScript(FB_SRC, { crossOrigin: 'anonymous' }).catch(reject)
   })
   return fbReady
 }

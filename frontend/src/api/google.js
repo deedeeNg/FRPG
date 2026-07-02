@@ -4,30 +4,15 @@
 // userinfo endpoint. Using the token client (not the ID-token button) is what lets
 // us keep a custom-styled button.
 
+import { loadScript } from './loadScript'
+
 const GIS_SRC = 'https://accounts.google.com/gsi/client'
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
-
-let gisReady
-
-function loadGis() {
-  if (gisReady) return gisReady
-  gisReady = new Promise((resolve, reject) => {
-    if (window.google?.accounts?.oauth2) return resolve()
-    const s = document.createElement('script')
-    s.src = GIS_SRC
-    s.async = true
-    s.defer = true
-    s.onload = () => resolve()
-    s.onerror = () => reject(new Error('Failed to load Google Identity Services'))
-    document.head.appendChild(s)
-  })
-  return gisReady
-}
 
 /** getGoogleToken opens the Google popup and resolves an OAuth access token. */
 export async function getGoogleToken() {
   if (!CLIENT_ID) throw new Error('VITE_GOOGLE_CLIENT_ID is not set')
-  await loadGis()
+  if (!window.google?.accounts?.oauth2) await loadScript(GIS_SRC)
   return new Promise((resolve, reject) => {
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
