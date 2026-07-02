@@ -249,6 +249,16 @@ sequenceDiagram
 
 ## Next goals / things to consider
 
+- **Google audience/client check — deliberately skipped for now.** To keep a
+  custom-styled button, the browser sends an OAuth **access token** and the Google
+  verifier (`adapters/google`) resolves it via the **userinfo** endpoint. userinfo
+  carries no `aud`, so we don't confirm the token was minted *for this app* — a token
+  issued to another app with `email`/`profile` scope would be accepted. **Decision:
+  accepted** — we only need the user's profile (email/name/sub), and the custom
+  button is worth more than the `aud` guarantee here. If this ever needs hardening
+  (e.g. before real production), the fix without losing the button is: additionally
+  call Google's tokeninfo on the access token and check `aud`/`azp` equals our client
+  ID. (Alternatively, switch back to the ID-token flow with Google's rendered button.)
 - **Separate login from sign-up** *(low priority)*. Today the OAuth path in
   `app/oauth.go` is **find-or-create**: a first-time Google/Facebook login silently
   creates the account (`Put(new user)` on `ErrNotFound`). Login and sign-up should be

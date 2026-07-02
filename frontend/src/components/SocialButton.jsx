@@ -1,7 +1,7 @@
 import { useTheme } from '../theme'
 import { useHover } from '../hooks/useHover'
 
-export default function SocialButton({ label, mark, markSize = 13, onClick }) {
+export default function SocialButton({ label, mark, markSize = 13, onClick, disabled = false }) {
   const { theme: t } = useTheme()
   const [hovered, hoverBind] = useHover()
 
@@ -15,16 +15,17 @@ export default function SocialButton({ label, mark, markSize = 13, onClick }) {
     fontSize: 14.5,
     fontWeight: 600,
     color: t.ink,
-    background: hovered ? t.socialHoverBg : t.socialBg,
-    border: `1px solid ${hovered ? t.socialHoverBorder : t.socialBorder}`,
+    background: hovered && !disabled ? t.socialHoverBg : t.socialBg,
+    border: `1px solid ${hovered && !disabled ? t.socialHoverBorder : t.socialBorder}`,
     borderRadius: 12,
     padding: 12,
-    cursor: 'pointer',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.7 : 1,
     transition: 'background .15s, border-color .15s',
   }
 
   return (
-    <button type="button" onClick={onClick} style={btn} {...hoverBind}>
+    <button type="button" onClick={onClick} disabled={disabled} style={btn} {...hoverBind}>
       <span
         style={{
           width: 22,

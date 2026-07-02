@@ -4,6 +4,8 @@ import Login from './pages/Login'
 import Landing from './pages/Landing'
 import ThemeToggle from './components/ThemeToggle'
 import { login } from './api/auth'
+import { getGoogleToken } from './api/google'
+import { getFacebookToken } from './api/facebook'
 
 // Demo harness: a page shell + a Login/Landing switcher so you can see both
 // screens. In production, replace the switcher with your router (react-router,
@@ -73,7 +75,14 @@ function Screen() {
               localStorage.setItem('frpg_token', token)
               setScreen('landing')
             }}
-            onProvider={(id) => console.log('oauth provider', id)} // TODO: needs Google/FB SDK to get a token first
+            onProvider={async (id) => {
+              // Get a provider token in the browser (Google/FB popup), then hand
+              // it to the same backend endpoint the password path uses.
+              const token = id === 'google' ? await getGoogleToken() : await getFacebookToken()
+              const session = await login(id, { token })
+              localStorage.setItem('frpg_token', session)
+              setScreen('landing')
+            }}
             onForgot={() => console.log('forgot password')}
             onSignup={() => setScreen('login')}
           />

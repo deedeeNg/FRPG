@@ -4,27 +4,28 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"frpg-backend/internal/adapters/google"
 	"frpg-backend/internal/domain"
 )
 
-// Points the real verifier at an httptest server mimicking Google's tokeninfo —
-// exercising real request building, JSON decoding, and the audience check.
+// Points the real verifier at an httptest server mimicking Google's userinfo
+// endpoint — exercising real request building, the Bearer header, and decoding.
 func TestVerifier_Verify(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("id_token") == "" {
-			http.Error(w, "no token", http.StatusBadRequest)
+		if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {
+			http.Error(w, "no token", http.StatusUnauthorized)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"sub":"114","email":"g@frpg.dev","name":"Gee","aud":"my-client-id"}`))
+		_, _ = w.Write([]byte(`{"sub":"114","email":"g@frpg.dev","name":"Gee"}`))
 	}))
 	defer srv.Close()
 
-	t.Run("valid token with matching audience", func(t *testing.T) {
-		v := google.Verifier{TokenInfoURL: srv.URL, Audience: "my-client-id"}
+	t.Run("valid access token returns profile", func(t *testing.T) {
+		v := google.Verifier{UserInfoURL: srv.URL}
 		got, err := v.Verify(context.Background(), domain.Credential{Token: "good"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -34,15 +35,8 @@ func TestVerifier_Verify(t *testing.T) {
 		}
 	})
 
-	t.Run("audience mismatch is rejected", func(t *testing.T) {
-		v := google.Verifier{TokenInfoURL: srv.URL, Audience: "someone-elses-client-id"}
-		if _, err := v.Verify(context.Background(), domain.Credential{Token: "good"}); err == nil {
-			t.Fatal("expected audience mismatch error")
-		}
-	})
-
 	t.Run("missing token errors before any call", func(t *testing.T) {
-		v := google.Verifier{TokenInfoURL: srv.URL}
+		v := google.Verifier{UserInfoURL: srv.URL}
 		if _, err := v.Verify(context.Background(), domain.Credential{}); err == nil {
 			t.Fatal("expected error for empty token")
 		}
@@ -53,7 +47,7 @@ func TestVerifier_Verify(t *testing.T) {
 			http.Error(w, "nope", http.StatusUnauthorized)
 		}))
 		defer down.Close()
-		v := google.Verifier{TokenInfoURL: down.URL}
+		v := google.Verifier{UserInfoURL: down.URL}
 		if _, err := v.Verify(context.Background(), domain.Credential{Token: "x"}); err == nil {
 			t.Fatal("expected error for non-200 response")
 		}

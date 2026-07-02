@@ -18,12 +18,15 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [busyProvider, setBusyProvider] = useState('')
   const [error, setError] = useState('')
   const [hovered, hoverBind] = useHover()
 
+  const busy = loading || !!busyProvider
+
   const submit = async (e) => {
     e.preventDefault()
-    if (!onSubmit || loading) return
+    if (!onSubmit || busy) return
     setError('')
     setLoading(true)
     try {
@@ -32,6 +35,19 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
       setError(err.message || 'Something went wrong')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const runProvider = async (id) => {
+    if (!onProvider || busy) return
+    setError('')
+    setBusyProvider(id)
+    try {
+      await onProvider(id)
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setBusyProvider('')
     }
   }
 
@@ -123,9 +139,9 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={busy}
           aria-busy={loading}
-          style={{ ...primaryBtn, ...(loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}) }}
+          style={{ ...primaryBtn, ...(busy ? { opacity: 0.7, cursor: 'not-allowed' } : {}) }}
           {...hoverBind}
         >
           {loading ? 'Logging in…' : 'Log in'}
@@ -142,10 +158,11 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
               {providers.map((p) => (
                 <SocialButton
                   key={p.id}
-                  label={p.label}
+                  label={busyProvider === p.id ? 'Connecting…' : p.label}
                   mark={p.mark}
                   markSize={p.markSize}
-                  onClick={() => onProvider && onProvider(p.id)}
+                  disabled={busy}
+                  onClick={() => runProvider(p.id)}
                 />
               ))}
             </div>

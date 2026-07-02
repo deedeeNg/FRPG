@@ -7,43 +7,43 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"frpg-backend/internal/domain"
 )
 
-// tokenInfoURL verifies a Google ID token. A production-hardened setup verifies
-// the JWT signature locally against Google's JWKS; this endpoint is a
-// dependency-free equivalent that is fine to start with.
-const tokenInfoURL = "https://oauth2.googleapis.com/tokeninfo"
+// userInfoURL returns the profile for a Google OAuth access token. The browser
+// obtains that access token via the Google Identity Services token client (a
+// popup), which lets the frontend keep a custom-styled button. In exchange we
+// identify the user from the userinfo endpoint instead of validating an ID
+// token's aud — see ARCHITECTURE.md "Next goals" for that tradeoff.
+const userInfoURL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 // Verifier is the real domain.ProfileVerifier for Google.
 type Verifier struct {
 	HTTPClient *http.Client
-	// Audience, if set, must equal the token's aud (your OAuth client_id).
-	Audience string
-	// TokenInfoURL overrides Google's endpoint; used by tests.
-	TokenInfoURL string
+	// UserInfoURL overrides Google's endpoint; used by tests.
+	UserInfoURL string
 }
 
 func (v Verifier) Verify(ctx context.Context, cred domain.Credential) (domain.ProviderProfile, error) {
 	if cred.Token == "" {
-		return domain.ProviderProfile{}, errors.New("missing id token")
+		return domain.ProviderProfile{}, errors.New("missing access token")
 	}
 	client := v.HTTPClient
 	if client == nil {
 		client = http.DefaultClient
 	}
 
-	base := v.TokenInfoURL
+	base := v.UserInfoURL
 	if base == "" {
-		base = tokenInfoURL
+		base = userInfoURL
 	}
-	endpoint := base + "?" + url.Values{"id_token": {cred.Token}}.Encode()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base, nil)
 	if err != nil {
 		return domain.ProviderProfile{}, err
 	}
+	req.Header.Set("Authorization", "Bearer "+cred.Token)
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return domain.ProviderProfile{}, err
@@ -57,13 +57,12 @@ func (v Verifier) Verify(ctx context.Context, cred domain.Credential) (domain.Pr
 		Sub   string `json:"sub"`
 		Email string `json:"email"`
 		Name  string `json:"name"`
-		Aud   string `json:"aud"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&claims); err != nil {
 		return domain.ProviderProfile{}, err
 	}
-	if v.Audience != "" && claims.Aud != v.Audience {
-		return domain.ProviderProfile{}, errors.New("token audience mismatch")
+	if claims.Sub == "" {
+		return domain.ProviderProfile{}, errors.New("userinfo response missing sub")
 	}
 	return domain.ProviderProfile{
 		ProviderUserID: claims.Sub,

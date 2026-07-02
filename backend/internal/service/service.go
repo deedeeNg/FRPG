@@ -29,7 +29,7 @@ func NewServer(ctx context.Context) *ports.Server {
 
 	identity := app.NewManager(
 		app.NewLocalProvider(repo),
-		app.NewOAuthProvider("google", google.Verifier{Audience: os.Getenv("GOOGLE_CLIENT_ID")}, repo),
+		app.NewOAuthProvider("google", google.Verifier{}, repo),
 		app.NewOAuthProvider("facebook", facebook.Verifier{}, repo),
 	)
 

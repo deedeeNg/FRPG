@@ -4,3 +4,6 @@ dist
 Dockerfile
 .dockerignore
 *.md
+.env
+.env.*
+!.env.example
