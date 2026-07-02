@@ -27,10 +27,18 @@ func NewServer(ctx context.Context) *ports.Server {
 	repo := buildRepo(ctx)
 	sessions := jwt.NewManager(envOr("SESSION_SECRET", devSecret()), 24*time.Hour)
 
+	// Facebook's app-audience check needs an app access token ("{app-id}|{secret}").
+	// Without the secret the check is skipped, so local dev still runs.
+	fbAppID := os.Getenv("FACEBOOK_APP_ID")
+	fbAppToken := ""
+	if secret := os.Getenv("FACEBOOK_APP_SECRET"); secret != "" && fbAppID != "" {
+		fbAppToken = fbAppID + "|" + secret
+	}
+
 	identity := app.NewManager(
 		app.NewLocalProvider(repo),
-		app.NewOAuthProvider("google", google.Verifier{}, repo),
-		app.NewOAuthProvider("facebook", facebook.Verifier{}, repo),
+		app.NewOAuthProvider("google", google.Verifier{Audience: os.Getenv("GOOGLE_CLIENT_ID")}, repo),
+		app.NewOAuthProvider("facebook", facebook.Verifier{AppID: fbAppID, AppToken: fbAppToken}, repo),
 	)
 
 	return &ports.Server{

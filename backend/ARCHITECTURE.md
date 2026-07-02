@@ -213,7 +213,10 @@ sequenceDiagram
   M->>L: Login(ctx, OAuthProvider, cred, mint)
   L->>O: Authenticate(ctx, cred)
   O->>V: Verify(ctx, cred)
-  V->>X: HTTPS verify token
+  V->>X: check audience (tokeninfo / debug_token)
+  X-->>V: aud / app_id
+  Note over V: reject if not our client/app
+  V->>X: fetch profile (userinfo / /me)
   X-->>V: profile {sub, email, name}
   V-->>O: ProviderProfile
   O->>R: GetByEmail(email)
@@ -247,22 +250,25 @@ sequenceDiagram
   end
 ```
 
+## Token provenance (audience) checks
+
+Both social verifiers confirm the access token was minted **for this app** before
+trusting it — closing the token-substitution hole (a token issued to some other app,
+with the same scopes, must not log its holder into FRPG). The browser keeps its
+custom buttons; the check is entirely backend-side.
+
+- **Google** (`adapters/google`): calls `tokeninfo` on the access token and rejects
+  it unless `aud`/`azp` equals `GOOGLE_CLIENT_ID`, then reads the profile from
+  `userinfo`.
+- **Facebook** (`adapters/facebook`): calls Graph `debug_token` (authenticated with
+  an app access token, `FACEBOOK_APP_ID|FACEBOOK_APP_SECRET`) and rejects the token
+  unless `data.app_id` is ours and `data.is_valid`, then reads the profile from `/me`.
+
+Each check is **skipped when its credentials are unset** (empty `GOOGLE_CLIENT_ID`, or
+missing Facebook app secret), so local dev runs without them — but production MUST set
+them. The Facebook App Secret is a real secret (backend-only); the Google client ID is
+public.
+
 ## Next goals / things to consider
 
-- **Google audience/client check — deliberately skipped for now.** To keep a
-  custom-styled button, the browser sends an OAuth **access token** and the Google
-  verifier (`adapters/google`) resolves it via the **userinfo** endpoint. userinfo
-  carries no `aud`, so we don't confirm the token was minted *for this app* — a token
-  issued to another app with `email`/`profile` scope would be accepted. **Decision:
-  accepted** — we only need the user's profile (email/name/sub), and the custom
-  button is worth more than the `aud` guarantee here. If this ever needs hardening
-  (e.g. before real production), the fix without losing the button is: additionally
-  call Google's tokeninfo on the access token and check `aud`/`azp` equals our client
-  ID. (Alternatively, switch back to the ID-token flow with Google's rendered button.)
-- **Separate login from sign-up** *(low priority)*. Today the OAuth path in
-  `app/oauth.go` is **find-or-create**: a first-time Google/Facebook login silently
-  creates the account (`Put(new user)` on `ErrNotFound`). Login and sign-up should be
-  distinct: a **first login with no existing account should fail with a "please sign
-  up" signal**, not auto-create the user. Sign-up should be its own explicit step.
-  This also means the local and OAuth paths get a shared notion of "account does not
-  exist yet" rather than each inventing one.
+_(none open — see CONSIDERATIONS.md for parked items, e.g. explicit sign-up.)_

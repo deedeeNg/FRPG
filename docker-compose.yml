@@ -56,6 +56,13 @@ services:
   backend:
     build:
       context: ./backend
+    # Load dev secrets/config (GOOGLE_CLIENT_ID, FACEBOOK_APP_ID/SECRET,
+    # SESSION_SECRET) the same way `go run` does via godotenv. Optional so a fresh
+    # checkout without backend/.env still starts. The `environment:` block below
+    # overrides any overlapping keys (e.g. the container's DynamoDB endpoint).
+    env_file:
+      - path: ./backend/.env
+        required: false
     ports:
       - "8080:8080"
     environment:
