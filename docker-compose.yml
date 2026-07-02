@@ -1,3 +1,12 @@
+# FRPG local stack. Common commands:
+#   docker compose up                                 # everything: dynamo + backend + frontend
+#   docker compose up -d                              # ...detached
+#   docker compose up backend                         # only backend (+ dynamo, via depends_on)
+#   docker compose up frontend                        # only frontend (+ backend + dynamo)
+#   docker compose up dynamodb-local                  # only dynamo
+#   docker compose --profile seed up dynamo-seed      # create + seed the Users table (one-shot)
+#   docker compose --profile tools up dynamodb-admin  # DynamoDB web UI at :8001
+#   docker compose down                               # stop (add -v to also wipe seeded data)
 services:
   dynamodb-local:
     image: amazon/dynamodb-local:latest
@@ -10,8 +19,10 @@ services:
       - dynamodb-data:/home/dynamodblocal/data
 
   # Optional web UI to eyeball the tables/items at http://localhost:8001
+  # Opt-in: docker compose --profile tools up dynamodb-admin
   dynamodb-admin:
     image: aaronshaf/dynamodb-admin:latest
+    profiles: ["tools"]
     ports:
       - "8001:8001"
     environment:

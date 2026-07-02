@@ -17,11 +17,22 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
   const { theme: t } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [hovered, hoverBind] = useHover()
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
-    if (onSubmit) onSubmit({ email, password })
+    if (!onSubmit || loading) return
+    setError('')
+    setLoading(true)
+    try {
+      await onSubmit({ email, password })
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const primaryBtn = {
@@ -104,8 +115,20 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
           </button>
         </div>
 
-        <button type="submit" style={primaryBtn} {...hoverBind}>
-          Log in
+        {error && (
+          <p role="alert" style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: '#E5484D' }}>
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          aria-busy={loading}
+          style={{ ...primaryBtn, ...(loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}) }}
+          {...hoverBind}
+        >
+          {loading ? 'Logging in…' : 'Log in'}
         </button>
 
         {showSocial && (

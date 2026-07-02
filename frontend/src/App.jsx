@@ -3,6 +3,7 @@ import { ThemeProvider, useTheme } from './theme'
 import Login from './pages/Login'
 import Landing from './pages/Landing'
 import ThemeToggle from './components/ThemeToggle'
+import { login } from './api/auth'
 
 // Demo harness: a page shell + a Login/Landing switcher so you can see both
 // screens. In production, replace the switcher with your router (react-router,
@@ -66,8 +67,13 @@ function Screen() {
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: 'auto 0' }}>
         {screen === 'login' ? (
           <Login
-            onSubmit={(creds) => console.log('login', creds)}
-            onProvider={(id) => console.log('oauth provider', id)}
+            onSubmit={async (creds) => {
+              // Throws on bad credentials; Login catches it and shows the error.
+              const token = await login('local', creds)
+              localStorage.setItem('frpg_token', token)
+              setScreen('landing')
+            }}
+            onProvider={(id) => console.log('oauth provider', id)} // TODO: needs Google/FB SDK to get a token first
             onForgot={() => console.log('forgot password')}
             onSignup={() => setScreen('login')}
           />
