@@ -62,3 +62,6 @@ Rules:
 
 - See `backend/ARCHITECTURE.md` for the design and `backend/CONSIDERATIONS.md` for
   open design questions not yet decided.
+- **`backend/ARCHITECTURE.md` ends with a "Next goals / things to consider"
+  section** — check it for parked backend follow-ups (and remind the user of them
+  when relevant).

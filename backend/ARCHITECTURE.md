@@ -10,7 +10,7 @@ Packages under `internal/` are layers, and **dependencies point inward toward
 | Layer (`internal/…`) | Role | May import |
 | --- | --- | --- |
 | `domain` | entities + the **port interfaces** (`IdentityProvider`, `ProfileVerifier`, `Repository`, `SessionManager`). Pure. | (nothing internal) |
-| `app` | **use cases**: `Login`, `LocalProvider`, `OAuthProvider` | `domain` |
+| `app` | **use cases**: `Login`, `Manager` (provider registry), `LocalProvider`, `OAuthProvider` | `domain` |
 | `adapters` | **driven adapters**: `Dynamo`/`InMemory`, `GoogleVerifier`/`FacebookVerifier`, JWT `SessionManager` | `domain` |
 | `ports` | **driving adapter**: HTTP server, handlers, middleware | `app`, `domain` |
 | `service` | composition root: wires adapters → use cases → server | all |
@@ -31,6 +31,36 @@ flowchart LR
 Everything points at `domain`; nothing points outward. If an inner layer needs an
 outer capability, it defines a **port interface in `domain`** and the outer layer
 implements it.
+
+## File map — who imports whom
+
+Go imports are per *package*, but here each file has a single clear job, so this
+reads file-to-file. `→` means "the left file's package imports the right file's
+package" (only the relevant symbols shown).
+
+| File | Imports (internal) | Provides |
+| --- | --- | --- |
+| `main.go` | `service` | process entrypoint; loads `.env`, starts HTTP server |
+| `cmd/seed/main.go` | `adapters/dynamo`, `domain` | dev tool: create + seed the Users table |
+| `service/service.go` | `ports`, `app`, `domain`, all five `adapters/*` | composition root: picks adapters, wires `app.Manager`, returns `*ports.Server` |
+| `ports/server.go` | `app` (`*Manager`), `domain` (`SessionManager`) | `Server` struct + `Routes()` (the mux) |
+| `ports/auth_handlers.go` | `app` (`ErrUnknownProvider`), `domain` | `handleAuth`, `writeLogin` |
+| `ports/middleware.go` | `domain` | `RequireAuth`, `handleMe`, `bearerToken` |
+| `ports/respond.go` | — | `writeJSON` / `writeError` / `decodeJSON` |
+| `app/manager.go` | `domain` (`IdentityProvider`) | `Manager` registry + `Manager.Login` (name → provider) |
+| `app/login.go` | `domain` | `Login` use case (yes/no → token / 401 / 500) |
+| `app/local.go` | `domain`, `bcrypt` | `LocalProvider` (implements `IdentityProvider`) |
+| `app/oauth.go` | `domain` | `OAuthProvider` (implements `IdentityProvider`) |
+| `adapters/dynamo/dynamo.go` | `domain`, aws-sdk | `Repository` over DynamoDB |
+| `adapters/inmem/inmem.go` | `domain` | `Repository` in memory + `NewSeeded()` |
+| `adapters/google/google.go` | `domain` | `Verifier` (implements `ProfileVerifier`) |
+| `adapters/facebook/facebook.go` | `domain` | `Verifier` (implements `ProfileVerifier`) |
+| `adapters/jwt/jwt.go` | `domain`, golang-jwt | `Manager` (implements `SessionManager`) |
+| `domain/*.go` | — | entities (`User`, `Identity`, `Session`) + port interfaces |
+
+Note the join point: **`service` is the only file that imports a concrete
+`adapters/*` package.** `ports` and `app` name only `app`/`domain` types, so the
+concrete Dynamo/JWT/Google choices are invisible above `domain`.
 
 ## What each layer is for (plain language)
 
@@ -70,14 +100,15 @@ flowchart TD
 
   subgraph ports["ports — HTTP delivery"]
     Routes["Server.Routes"]
-    HLogin["handleLogin"]
-    HOAuth["handleOAuth(provider)"]
+    HAuth["handleAuth(provider)"]
+    HHealth["handleHealth"]
     HMe["handleMe"]
     MW["RequireAuth"]
     Mint["Server.mint"]
   end
 
   subgraph app["app — use cases"]
+    Mgr["Manager.Login<br/>(name → provider)"]
     Login["Login"]
     Local["LocalProvider"]
     OAuth["OAuthProvider"]
@@ -102,12 +133,11 @@ flowchart TD
   ExtF[("Facebook")]
   DDB[("DynamoDB")]
 
-  Client -->|POST /auth/login| Routes --> HLogin
-  Client -->|POST /auth/oauth/*| Routes --> HOAuth
+  Client -->|POST /auth/{provider}| Routes --> HAuth
+  Client -->|GET /api/health| Routes --> HHealth
   Client -->|GET /api/me| Routes --> MW --> HMe
 
-  HLogin --> Login
-  HOAuth --> Login
+  HAuth --> Mgr --> Login
   Login --> IP
   Local -.implements.-> IP
   OAuth -.implements.-> IP
@@ -138,14 +168,16 @@ depend only on the `domain` interfaces — so nothing above `domain` names a con
 ```mermaid
 sequenceDiagram
   actor C as Client
-  participant H as ports.handleLogin
+  participant H as ports.handleAuth
+  participant M as app.Manager
   participant L as app.Login
   participant P as app.LocalProvider
   participant R as domain.Repository<br/>(adapters: Dynamo / InMemory)
   participant S as domain.SessionManager<br/>(adapters: JWT)
 
-  C->>H: POST /auth/login {email, password}
-  H->>L: Login(ctx, Local, cred, mint)
+  C->>H: POST /auth/local {email, password}
+  H->>M: Login(ctx, "local", cred, mint)
+  M->>L: Login(ctx, LocalProvider, cred, mint)
   L->>P: Authenticate(ctx, cred)
   P->>R: GetByEmail(email)
   R-->>P: User | ErrNotFound
@@ -167,7 +199,8 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   actor C as Client
-  participant H as ports.handleOAuth
+  participant H as ports.handleAuth
+  participant M as app.Manager
   participant L as app.Login
   participant O as app.OAuthProvider
   participant V as domain.ProfileVerifier<br/>(adapters: Google / Facebook)
@@ -175,8 +208,9 @@ sequenceDiagram
   participant R as domain.Repository
   participant S as domain.SessionManager
 
-  C->>H: POST /auth/oauth/google {token}
-  H->>L: Login(ctx, Google, cred, mint)
+  C->>H: POST /auth/google {token}
+  H->>M: Login(ctx, "google", cred, mint)
+  M->>L: Login(ctx, OAuthProvider, cred, mint)
   L->>O: Authenticate(ctx, cred)
   O->>V: Verify(ctx, cred)
   V->>X: HTTPS verify token
@@ -212,3 +246,13 @@ sequenceDiagram
     MW-->>C: 401 {error}
   end
 ```
+
+## Next goals / things to consider
+
+- **Separate login from sign-up** *(low priority)*. Today the OAuth path in
+  `app/oauth.go` is **find-or-create**: a first-time Google/Facebook login silently
+  creates the account (`Put(new user)` on `ErrNotFound`). Login and sign-up should be
+  distinct: a **first login with no existing account should fail with a "please sign
+  up" signal**, not auto-create the user. Sign-up should be its own explicit step.
+  This also means the local and OAuth paths get a shared notion of "account does not
+  exist yet" rather than each inventing one.
