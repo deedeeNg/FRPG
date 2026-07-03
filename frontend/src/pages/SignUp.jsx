@@ -7,16 +7,16 @@ import { providers } from '../data/providers'
 import { useHover } from '../hooks/useHover'
 
 /**
- * Login screen. All behavior is passed in via props so you can wire it to
- * your backend without touching the markup:
- *   onSubmit({ email, password })  -> POST to your auth endpoint / Cognito
- *   onProvider(providerId)         -> kick off OAuth ('google' | 'facebook')
- *   onForgot(), onSignup()         -> navigation
+ * Sign-up screen. Mirrors Login; behavior injected via props:
+ *   onSubmit({ email, password })  -> create the account (local email/password)
+ *   onProvider(providerId)         -> sign up via OAuth ('google' | 'facebook')
+ *   onLogin()                      -> navigate to the login screen
  */
-export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSocial = true }) {
+export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = true }) {
   const { theme: t } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [busyProvider, setBusyProvider] = useState('')
   const [error, setError] = useState('')
@@ -28,6 +28,14 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
     e.preventDefault()
     if (!onSubmit || busy) return
     setError('')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
     setLoading(true)
     try {
       await onSubmit({ email, password })
@@ -101,9 +109,9 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
             color: t.ink,
           }}
         >
-          Welcome back
+          Create your account
         </h1>
-        <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>Continue your quest to fluency.</p>
+        <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>Start your quest to fluency.</p>
 
         <TextField
           label="Email"
@@ -119,20 +127,20 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
           type="password"
           name="password"
           placeholder="••••••••"
-          autoComplete="current-password"
-          gap={22}
+          autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-
-        {/* Forgot-password flow isn't built yet — hidden so there's no dead button.
-            Re-enable this block (and wire the onForgot prop) when password reset lands.
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 22 }}>
-          <button type="button" onClick={onForgot} style={{ ...linkBtn, fontSize: 12.5 }}>
-            Forgot password?
-          </button>
-        </div>
-        */}
+        <TextField
+          label="Confirm password"
+          type="password"
+          name="confirm"
+          placeholder="••••••••"
+          autoComplete="new-password"
+          gap={22}
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+        />
 
         {error && (
           <p role="alert" style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: '#E5484D' }}>
@@ -147,14 +155,14 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
           style={{ ...primaryBtn, ...(busy ? { opacity: 0.7, cursor: 'not-allowed' } : {}) }}
           {...hoverBind}
         >
-          {loading ? 'Logging in…' : 'Log in'}
+          {loading ? 'Creating account…' : 'Create account'}
         </button>
 
         {showSocial && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
               <span style={{ flex: 1, height: 1, background: t.divider }} />
-              <span style={{ fontSize: 11.5, color: t.faint, letterSpacing: '.04em' }}>or continue with</span>
+              <span style={{ fontSize: 11.5, color: t.faint, letterSpacing: '.04em' }}>or sign up with</span>
               <span style={{ flex: 1, height: 1, background: t.divider }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
@@ -174,9 +182,9 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
       </div>
 
       <p style={{ textAlign: 'center', fontSize: 13.5, color: t.soft, margin: '22px 0 0' }}>
-        New adventurer?{' '}
-        <button type="button" onClick={onSignup} style={{ ...linkBtn, fontWeight: 700, fontSize: 13.5 }}>
-          Create an account
+        Already have an account?{' '}
+        <button type="button" onClick={onLogin} style={{ ...linkBtn, fontWeight: 700, fontSize: 13.5 }}>
+          Log in
         </button>
       </p>
     </form>

@@ -1,11 +1,79 @@
+# FRPG local stack. Common commands:
+#   docker compose up                                 # everything: dynamo + backend + frontend
+#   docker compose up -d                              # ...detached
+#   docker compose up backend                         # only backend (+ dynamo, via depends_on)
+#   docker compose up frontend                        # only frontend (+ backend + dynamo)
+#   docker compose up dynamodb-local                  # only dynamo
+#   docker compose --profile seed up dynamo-seed      # create + seed the Users table (one-shot)
+#   docker compose --profile tools up dynamodb-admin  # DynamoDB web UI at :8001
+#   docker compose down                               # stop (add -v to also wipe seeded data)
 services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    working_dir: /home/dynamodblocal
+    user: root
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+
+  # Optional web UI to eyeball the tables/items at http://localhost:8001
+  # Opt-in: docker compose --profile tools up dynamodb-admin
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:latest
+    profiles: ["tools"]
+    ports:
+      - "8001:8001"
+    environment:
+      - DYNAMO_ENDPOINT=http://dynamodb-local:8000
+      - AWS_REGION=local
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+    depends_on:
+      - dynamodb-local
+
+  # One-shot: create the Users table + seed test users (Go seeder).
+  # Run explicitly with:  docker compose --profile seed up dynamo-seed
+  dynamo-seed:
+    image: golang:1.22
+    profiles: ["seed"]
+    working_dir: /app
+    depends_on:
+      - dynamodb-local
+    environment:
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - AWS_REGION=local
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - USERS_TABLE=Users
+      - GOFLAGS=-mod=mod
+    command: ["go", "run", "./cmd/seed"]
+    volumes:
+      - ./backend:/app
+      - go-mod-cache:/go/pkg/mod
+
   backend:
     build:
       context: ./backend
+    # Load dev secrets/config (GOOGLE_CLIENT_ID, FACEBOOK_APP_ID/SECRET,
+    # SESSION_SECRET) the same way `go run` does via godotenv. Optional so a fresh
+    # checkout without backend/.env still starts. The `environment:` block below
+    # overrides any overlapping keys (e.g. the container's DynamoDB endpoint).
+    env_file:
+      - path: ./backend/.env
+        required: false
     ports:
       - "8080:8080"
     environment:
       - PORT=8080
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - AWS_REGION=local
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - USERS_TABLE=Users
+    depends_on:
+      - dynamodb-local
 
   frontend:
     build:
@@ -20,3 +88,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+
+volumes:
+  dynamodb-data:
+  go-mod-cache:
