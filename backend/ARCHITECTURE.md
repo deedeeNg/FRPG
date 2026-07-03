@@ -10,7 +10,7 @@ Packages under `internal/` are layers, and **dependencies point inward toward
 | Layer (`internal/…`) | Role | May import |
 | --- | --- | --- |
 | `domain` | entities + the **port interfaces** (`IdentityProvider`, `ProfileVerifier`, `Repository`, `SessionManager`). Pure. | (nothing internal) |
-| `app` | **use cases**: `Login`, `Manager` (provider registry), `LocalProvider`, `OAuthProvider` | `domain` |
+| `app` | **use cases**: `Login`, `Manager` (provider registry), `LocalProvider`, `OAuthProvider`, `LocalSignUp` | `domain` |
 | `adapters` | **driven adapters**: `Dynamo`/`InMemory`, `GoogleVerifier`/`FacebookVerifier`, JWT `SessionManager` | `domain` |
 | `ports` | **driving adapter**: HTTP server, handlers, middleware | `app`, `domain` |
 | `service` | composition root: wires adapters → use cases → server | all |
@@ -43,14 +43,16 @@ package" (only the relevant symbols shown).
 | `main.go` | `service` | process entrypoint; loads `.env`, starts HTTP server |
 | `cmd/seed/main.go` | `adapters/dynamo`, `domain` | dev tool: create + seed the Users table |
 | `service/service.go` | `ports`, `app`, `domain`, all five `adapters/*` | composition root: picks adapters, wires `app.Manager`, returns `*ports.Server` |
-| `ports/server.go` | `app` (`*Manager`), `domain` (`SessionManager`) | `Server` struct + `Routes()` (the mux) |
+| `ports/server.go` | `app` (`*Manager`, `LocalSignUp`), `domain` (`SessionManager`) | `Server` struct + `Routes()` (the mux) |
 | `ports/auth_handlers.go` | `app` (`ErrUnknownProvider`), `domain` | `handleAuth`, `writeLogin` |
+| `ports/signup_handlers.go` | `app` (`ErrEmailTaken`), `domain` | `handleSignUp` (local email/password sign-up) |
 | `ports/middleware.go` | `domain` | `RequireAuth`, `handleMe`, `bearerToken` |
 | `ports/respond.go` | — | `writeJSON` / `writeError` / `decodeJSON` |
 | `app/manager.go` | `domain` (`IdentityProvider`) | `Manager` registry + `Manager.Login` (name → provider) |
 | `app/login.go` | `domain` | `Login` use case (yes/no → token / 401 / 500) |
 | `app/local.go` | `domain`, `bcrypt` | `LocalProvider` (implements `IdentityProvider`) |
 | `app/oauth.go` | `domain` | `OAuthProvider` (implements `IdentityProvider`) |
+| `app/signup.go` | `domain`, `bcrypt` | `LocalSignUp` use case (create a local account) |
 | `adapters/dynamo/dynamo.go` | `domain`, aws-sdk | `Repository` over DynamoDB |
 | `adapters/inmem/inmem.go` | `domain` | `Repository` in memory + `NewSeeded()` |
 | `adapters/google/google.go` | `domain` | `Verifier` (implements `ProfileVerifier`) |
@@ -101,6 +103,7 @@ flowchart TD
   subgraph ports["ports — HTTP delivery"]
     Routes["Server.Routes"]
     HAuth["handleAuth(provider)"]
+    HSignup["handleSignUp"]
     HHealth["handleHealth"]
     HMe["handleMe"]
     MW["RequireAuth"]
@@ -112,6 +115,7 @@ flowchart TD
     Login["Login"]
     Local["LocalProvider"]
     OAuth["OAuthProvider"]
+    SignUp["LocalSignUp"]
   end
 
   subgraph domain["domain — entities + ports"]
@@ -134,10 +138,13 @@ flowchart TD
   DDB[("DynamoDB")]
 
   Client -->|POST /auth/{provider}| Routes --> HAuth
+  Client -->|POST /signup| Routes --> HSignup
   Client -->|GET /api/health| Routes --> HHealth
   Client -->|GET /api/me| Routes --> MW --> HMe
 
   HAuth --> Mgr --> Login
+  HSignup --> SignUp
+  SignUp --> Repo
   Login --> IP
   Local -.implements.-> IP
   OAuth -.implements.-> IP
@@ -152,6 +159,7 @@ flowchart TD
   JWT -.implements.-> SM
 
   Login --> Mint --> SM
+  HSignup --> Mint
   MW --> SM
 
   GV -->|HTTPS| ExtG
@@ -218,10 +226,13 @@ sequenceDiagram
   Note over V: reject if not our client/app
   V->>X: fetch profile (userinfo / /me)
   X-->>V: profile {sub, email, name}
-  V-->>O: ProviderProfile
+  V-->>O: ProviderProfile{sub, email, email_verified}
+  Note over O: reject if email not verified
   O->>R: GetByEmail(email)
-  alt first sign-in
-    O->>R: Put(new user)
+  alt first sign-in (not found)
+    O->>R: Put(new user, keyed to provider+sub)
+  else email exists
+    Note over O: accept only if same (provider, sub)<br/>else reject (no silent linking)
   end
   O-->>L: AuthResult{Authenticated, Identity}
   L->>S: mint → Mint
@@ -268,6 +279,26 @@ Each check is **skipped when its credentials are unset** (empty `GOOGLE_CLIENT_I
 missing Facebook app secret), so local dev runs without them — but production MUST set
 them. The Facebook App Secret is a real secret (backend-only); the Google client ID is
 public.
+
+## Account matching (login = sign-up, safely)
+
+Social sign-in is intentionally **one door**: "Continue with Google/Facebook" both
+logs in and, on first sign-in, creates the account (find-or-create) — low friction,
+no separate sign-up step. Each `IdentityProvider` owns "are you already a user?":
+`LocalProvider` answers by email + password; `OAuthProvider` by the **provider
+identity** (`provider` + `providerUserID`/`sub`).
+
+Two rules keep the merge safe (`app/oauth.go`):
+- **Verified email only.** Reject if the provider reports the email isn't verified.
+- **Match by identity, never link by bare email.** When an account already exists for
+  the email, accept it only if its stored `(provider, providerUserID)` matches the
+  token's. A mismatch is **rejected** — a Google login can't claim a pre-existing
+  local (or other-provider) account. This blocks account **pre-hijacking** and the
+  reason we don't match on email alone: same email ≠ same account.
+
+Consequence: **one account per email** (a Google login and a password account can't
+share `you@x.com`). Multi-account-per-email or explicit account linking would need a
+`sub`-keyed lookup (see CONSIDERATIONS) — deferred.
 
 ## Next goals / things to consider
 

@@ -27,6 +27,7 @@ func TestOAuthProvider_ExistingSocialUser(t *testing.T) {
 		profile: domain.ProviderProfile{
 			ProviderUserID: "google-oauth2|1234567890",
 			Email:          "googler@frpg.dev",
+			EmailVerified:  true,
 			DisplayName:    "Googler",
 		},
 	}, repo)
@@ -49,6 +50,7 @@ func TestOAuthProvider_AutoProvisionsNewUser(t *testing.T) {
 		profile: domain.ProviderProfile{
 			ProviderUserID: "google-oauth2|999",
 			Email:          "newbie@frpg.dev",
+			EmailVerified:  true,
 			DisplayName:    "Newbie",
 		},
 	}, repo)
@@ -67,6 +69,55 @@ func TestOAuthProvider_AutoProvisionsNewUser(t *testing.T) {
 	}
 	if u.Provider != "google" || u.ProviderUserID != "google-oauth2|999" || u.PasswordHash != "" {
 		t.Fatalf("provisioned user is wrong: %+v", u)
+	}
+}
+
+func TestOAuthProvider_RejectsEmailOwnedByAnotherMethod(t *testing.T) {
+	repo := inmem.NewSeeded() // test@frpg.dev is a LOCAL (password) account
+	// A Google identity whose email collides with the existing local account.
+	google := app.NewOAuthProvider("google", fakeVerifier{
+		profile: domain.ProviderProfile{
+			ProviderUserID: "google-oauth2|attacker",
+			Email:          "test@frpg.dev",
+			EmailVerified:  true,
+			DisplayName:    "Not Test",
+		},
+	}, repo)
+
+	res, err := google.Authenticate(context.Background(), domain.Credential{Token: "valid"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Authenticated {
+		t.Fatal("expected rejection: email belongs to a different sign-in method")
+	}
+	// The local account must be untouched (not clobbered / relinked).
+	u, _ := repo.GetByEmail(context.Background(), "test@frpg.dev")
+	if u.Provider != "local" || u.PasswordHash == "" {
+		t.Fatalf("local account was altered: %+v", u)
+	}
+}
+
+func TestOAuthProvider_RejectsUnverifiedEmail(t *testing.T) {
+	repo := inmem.New()
+	google := app.NewOAuthProvider("google", fakeVerifier{
+		profile: domain.ProviderProfile{
+			ProviderUserID: "google-oauth2|555",
+			Email:          "unverified@frpg.dev",
+			EmailVerified:  false,
+			DisplayName:    "Unverified",
+		},
+	}, repo)
+
+	res, err := google.Authenticate(context.Background(), domain.Credential{Token: "valid"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Authenticated {
+		t.Fatal("expected rejection for an unverified provider email")
+	}
+	if _, err := repo.GetByEmail(context.Background(), "unverified@frpg.dev"); !errors.Is(err, domain.ErrNotFound) {
+		t.Fatal("no account should have been created for an unverified email")
 	}
 }
 

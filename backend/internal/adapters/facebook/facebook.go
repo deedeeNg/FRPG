@@ -85,7 +85,10 @@ func (v Verifier) Verify(ctx context.Context, cred domain.Credential) (domain.Pr
 	return domain.ProviderProfile{
 		ProviderUserID: profile.ID,
 		Email:          profile.Email,
-		DisplayName:    profile.Name,
+		// Graph /me only returns an email when the account has a confirmed one, so
+		// a present email is effectively verified (Facebook exposes no separate flag).
+		EmailVerified: profile.Email != "",
+		DisplayName:   profile.Name,
 	}, nil
 }
 

@@ -43,6 +43,7 @@ func NewServer(ctx context.Context) *ports.Server {
 
 	return &ports.Server{
 		Identity: identity,
+		Signup:   app.NewLocalSignUp(repo),
 		Sessions: sessions,
 	}
 }

@@ -68,9 +68,10 @@ func (v Verifier) Verify(ctx context.Context, cred domain.Credential) (domain.Pr
 	}
 
 	var claims struct {
-		Sub   string `json:"sub"`
-		Email string `json:"email"`
-		Name  string `json:"name"`
+		Sub           string `json:"sub"`
+		Email         string `json:"email"`
+		EmailVerified bool   `json:"email_verified"`
+		Name          string `json:"name"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&claims); err != nil {
 		return domain.ProviderProfile{}, err
@@ -81,6 +82,7 @@ func (v Verifier) Verify(ctx context.Context, cred domain.Credential) (domain.Pr
 	return domain.ProviderProfile{
 		ProviderUserID: claims.Sub,
 		Email:          claims.Email,
+		EmailVerified:  claims.EmailVerified,
 		DisplayName:    claims.Name,
 	}, nil
 }

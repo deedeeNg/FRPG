@@ -26,8 +26,9 @@ func NewOAuthProvider(name string, verifier domain.ProfileVerifier, repo domain.
 
 func (p OAuthProvider) Name() string { return p.ProviderName }
 
-// Authenticate verifies the token, then maps the profile to a local account,
-// creating one on first sign-in. A bad token is a normal failure, not an error.
+// Authenticate verifies the token, then resolves it to a local account by the
+// provider identity (provider + providerUserID), creating one on first sign-in.
+// A bad token is a normal failure, not an error.
 func (p OAuthProvider) Authenticate(ctx context.Context, cred domain.Credential) (domain.AuthResult, error) {
 	profile, err := p.Verifier.Verify(ctx, cred)
 	if err != nil {
@@ -36,10 +37,14 @@ func (p OAuthProvider) Authenticate(ctx context.Context, cred domain.Credential)
 	if profile.Email == "" {
 		return domain.Fail(p.ProviderName + ": provider returned no email"), nil
 	}
+	if !profile.EmailVerified {
+		return domain.Fail(p.ProviderName + ": email is not verified"), nil
+	}
 
 	u, err := p.Users.GetByEmail(ctx, profile.Email)
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
+		// First time we've seen this identity — create the account.
 		u = domain.User{
 			Email:          profile.Email,
 			UserID:         p.ProviderName + ":" + profile.ProviderUserID,
@@ -53,6 +58,14 @@ func (p OAuthProvider) Authenticate(ctx context.Context, cred domain.Credential)
 		}
 	case err != nil:
 		return domain.AuthResult{}, err
+	default:
+		// An account already owns this email. Accept it only if it is the SAME
+		// identity (same provider + providerUserID); never silently link a
+		// different sign-in method to it. This blocks account pre-hijacking (e.g.
+		// a Google login claiming a pre-existing local/other-provider account).
+		if u.Provider != p.ProviderName || u.ProviderUserID != profile.ProviderUserID {
+			return domain.Fail(p.ProviderName + ": email already registered with a different sign-in method"), nil
+		}
 	}
 
 	return domain.Success(domain.Identity{

@@ -1,10 +1,15 @@
 package domain
 
-// SeedUsers is the single source of truth for the canonical test users. Both the
-// DynamoDB seeder (cmd/seed) and the unit tests use it, so "the seeded user"
-// means exactly the same thing in tests and against local DynamoDB.
+// SeedUsers is the single source of truth for the canonical dev/test accounts.
+// Both the DynamoDB seeder (cmd/seed) and the unit tests use it, so "the seeded
+// user" means exactly the same thing in tests and against local DynamoDB.
 //
-// The password hash below is a real bcrypt hash of "password123".
+// Dev login credentials (what other developers need to know):
+//
+//	test@frpg.dev     password123      local — email + password
+//	googler@frpg.dev  (no password)    google — social account (placeholder)
+//
+// The PasswordHash below is a real bcrypt hash of "password123".
 func SeedUsers() []User {
 	return []User{
 		{

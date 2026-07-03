@@ -43,47 +43,65 @@ env — the same code hits real AWS when `DYNAMODB_ENDPOINT` is unset:
 | `AWS_REGION` | `local` | e.g. `ap-southeast-2` |
 | `USERS_TABLE` | `Users` | `Users` |
 
-### Seed test users
+### Seed / inspect users
 
-Creates the `Users` table and inserts the canonical test users
-(`test@frpg.dev` / `password123`, plus a Google social user):
+Create the `Users` table and insert the dev accounts — `test@frpg.dev` /
+`password123` (local) plus a Google social user, defined in
+`internal/domain/seed.go`:
 
 ```bash
-docker compose --profile seed up dynamo-seed
+docker compose run --rm dynamo-seed            # one-off (reliable)
+# or:  docker compose --profile seed up dynamo-seed
 ```
 
-## Auth architecture
+To eyeball the table in a browser (DynamoDB Admin at http://localhost:8001):
 
-Authentication is abstracted behind one interface so providers are swappable and
-testable without any network calls:
-
-```
-IdentityProvider.Authenticate(ctx, Credential) -> AuthResult{ Authenticated, Identity, Reason }
+```bash
+docker compose --profile tools up dynamodb-admin
 ```
 
-- `LocalProvider` — email + password checked against the user repository (bcrypt).
-- `MockProvider` — configurable stub (a function field) that returns yes/no for tests.
-- `OAuthProvider` — Google / Facebook. Verifies the token via a `ProfileVerifier`
-  (the only network boundary; faked in tests), then finds-or-creates the user.
-- `Login(...)` — the single integration seam: turns a provider's yes/no result
-  into a session (on success) or an error (on failure). At integration time you
-  only route the chosen provider's result through this one function.
+## Auth
+
+Full design + diagrams are in [ARCHITECTURE.md](ARCHITECTURE.md). In short:
+
+- `domain` defines the port interfaces (`IdentityProvider`, `ProfileVerifier`,
+  `Repository`, `SessionManager`); `app` holds the use cases; `adapters` implement
+  the ports; `ports` is the HTTP layer.
+- **Login** runs through a provider registry (`app.Manager`): one
+  `POST /auth/{provider}` route serves `local`, `google`, and `facebook`.
+- **Sign-up**: `POST /signup` creates a local (email + password) account and logs
+  the user in. Social sign-up is find-or-create on first login (same
+  `/auth/{provider}` route — no separate social sign-up endpoint).
+- Social tokens are checked for **audience** (that they were minted for *this* app)
+  before the profile is trusted; accounts are matched by `(provider, providerUserID)`,
+  never linked by bare email.
 
 ### HTTP routes
 
-| Method + path | Provider | Body | Success |
+| Method + path | Purpose | Body | Success |
 | --- | --- | --- | --- |
-| `POST /auth/login` | local (email/password) | `{email, password}` | `{token}` |
-| `POST /auth/oauth/google` | Google | `{token}` (Google id token) | `{token}` |
-| `POST /auth/oauth/facebook` | Facebook | `{token}` (FB access token) | `{token}` |
-| `GET /api/me` | — (Bearer session) | — | `{userId, email}` |
-| `GET /api/health` | — | — | `{status}` |
+| `POST /auth/{provider}` | log in (`local` \| `google` \| `facebook`) | local: `{email, password}` · social: `{token}` | `{token}` |
+| `POST /signup` | create a local account (auto-logs in) | `{email, password}` | `{token}` |
+| `GET /api/me` | current user (Bearer session) | — | `{userId, email}` |
+| `GET /api/health` | liveness | — | `{status}` |
 
-`{token}` in responses is our own signed session JWT (`internal/session`), not the
-provider's token. Configure via env: `SESSION_SECRET`, `GOOGLE_CLIENT_ID`.
+`{token}` is our own signed session JWT (`internal/adapters/jwt`), not the
+provider's token.
 
-Run the auth tests (no DynamoDB or network needed — they use an in-memory repo):
+### Config (env)
+
+| Env | Purpose |
+| --- | --- |
+| `SESSION_SECRET` | HMAC key for signing session JWTs (required in prod) |
+| `GOOGLE_CLIENT_ID` | Google `aud` check; empty disables it (dev only) |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook `debug_token` app check; empty disables it (dev only) |
+
+See `.env.example` for the full list (incl. the DynamoDB vars above).
+
+## Tests
+
+No DynamoDB or network needed — they use an in-memory repo and fake verifiers:
 
 ```bash
-gorun go test ./internal/auth/...
+gorun go test ./...
 ```

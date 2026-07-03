@@ -14,6 +14,7 @@ import (
 // single route handles local/google/facebook.
 type Server struct {
 	Identity *app.Manager
+	Signup   app.LocalSignUp
 	Sessions domain.SessionManager
 }
 
@@ -24,6 +25,7 @@ func (s *Server) Routes() http.Handler {
 
 	mux.HandleFunc("GET /api/health", s.handleHealth)
 	mux.HandleFunc("POST /auth/{provider}", s.handleAuth)
+	mux.HandleFunc("POST /signup", s.handleSignUp)
 	mux.Handle("GET /api/me", s.RequireAuth(http.HandlerFunc(s.handleMe)))
 
 	return mux

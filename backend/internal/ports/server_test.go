@@ -34,10 +34,11 @@ func newTestServer() *ports.Server {
 		Identity: app.NewManager(
 			app.NewLocalProvider(repo),
 			app.NewOAuthProvider("google", fakeVerifier{
-				profile: domain.ProviderProfile{ProviderUserID: "google-oauth2|1234567890", Email: "googler@frpg.dev", DisplayName: "Googler"},
+				profile: domain.ProviderProfile{ProviderUserID: "google-oauth2|1234567890", Email: "googler@frpg.dev", EmailVerified: true, DisplayName: "Googler"},
 			}, repo),
 			app.NewOAuthProvider("facebook", fakeVerifier{err: errors.New("not linked")}, repo),
 		),
+		Signup:   app.NewLocalSignUp(repo),
 		Sessions: jwt.NewManager("test-secret", time.Hour),
 	}
 }
@@ -87,6 +88,41 @@ func TestAuthRoute_Social(t *testing.T) {
 		rec := post(t, h, "/auth/facebook", `{"token":"any"}`)
 		if rec.Code != http.StatusUnauthorized {
 			t.Fatalf("status = %d, want 401", rec.Code)
+		}
+	})
+}
+
+func TestSignUpRoute(t *testing.T) {
+	h := newTestServer().Routes()
+
+	t.Run("new email -> 200 + token, then can log in", func(t *testing.T) {
+		rec := post(t, h, "/signup", `{"email":"newbie@frpg.dev","password":"hunter2!!"}`)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200 (body: %s)", rec.Code, rec.Body)
+		}
+		var resp map[string]string
+		_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+		if resp["token"] == "" {
+			t.Fatalf("expected a token, got: %v", resp)
+		}
+		// The freshly created account must now authenticate via /auth/local.
+		login := post(t, h, "/auth/local", `{"email":"newbie@frpg.dev","password":"hunter2!!"}`)
+		if login.Code != http.StatusOK {
+			t.Fatalf("login after signup status = %d, want 200 (body: %s)", login.Code, login.Body)
+		}
+	})
+
+	t.Run("existing email -> 409", func(t *testing.T) {
+		rec := post(t, h, "/signup", `{"email":"test@frpg.dev","password":"hunter2!!"}`)
+		if rec.Code != http.StatusConflict {
+			t.Fatalf("status = %d, want 409", rec.Code)
+		}
+	})
+
+	t.Run("short password -> 400", func(t *testing.T) {
+		rec := post(t, h, "/signup", `{"email":"short@frpg.dev","password":"abc"}`)
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", rec.Code)
 		}
 	})
 }

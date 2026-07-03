@@ -45,6 +45,7 @@ type IdentityProvider interface {
 type ProviderProfile struct {
 	ProviderUserID string
 	Email          string
+	EmailVerified  bool
 	DisplayName    string
 }
 
@@ -66,3 +67,9 @@ func Fail(reason string) AuthResult  { return AuthResult{Authenticated: false, R
 type ErrUnauthenticated struct{ Reason string }
 
 func (e *ErrUnauthenticated) Error() string { return "unauthenticated: " + e.Reason }
+
+// ErrInvalidInput marks a bad request (e.g. a malformed email or too-short
+// password); the ports layer maps it to a 400 and surfaces Reason to the client.
+type ErrInvalidInput struct{ Reason string }
+
+func (e *ErrInvalidInput) Error() string { return "invalid input: " + e.Reason }

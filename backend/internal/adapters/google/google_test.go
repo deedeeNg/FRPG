@@ -29,7 +29,7 @@ func fakeGoogle(t *testing.T, aud string) (tokenInfoURL, userInfoURL string) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"sub":"114","email":"g@frpg.dev","name":"Gee"}`))
+		_, _ = w.Write([]byte(`{"sub":"114","email":"g@frpg.dev","email_verified":true,"name":"Gee"}`))
 	}))
 	t.Cleanup(tokenInfo.Close)
 	t.Cleanup(userInfo.Close)

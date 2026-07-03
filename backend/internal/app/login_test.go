@@ -31,7 +31,7 @@ func TestLogin_Routing(t *testing.T) {
 
 	t.Run("authenticated -> mints a session", func(t *testing.T) {
 		p := app.NewOAuthProvider("google", fakeVerifier{
-			profile: domain.ProviderProfile{ProviderUserID: "g|1", Email: "googler@frpg.dev", DisplayName: "Googler"},
+			profile: domain.ProviderProfile{ProviderUserID: "google-oauth2|1234567890", Email: "googler@frpg.dev", EmailVerified: true, DisplayName: "Googler"},
 		}, inmem.NewSeeded())
 		session, err := app.Login(ctx, p, domain.Credential{Token: "ok"}, mintFake)
 		if err != nil {
@@ -53,7 +53,7 @@ func TestLogin_Routing(t *testing.T) {
 
 	t.Run("transport error -> propagates (not a 401)", func(t *testing.T) {
 		p := app.NewOAuthProvider("google", fakeVerifier{
-			profile: domain.ProviderProfile{ProviderUserID: "g|2", Email: "x@frpg.dev"},
+			profile: domain.ProviderProfile{ProviderUserID: "g|2", Email: "x@frpg.dev", EmailVerified: true},
 		}, failingRepo{})
 		_, err := app.Login(ctx, p, domain.Credential{Token: "ok"}, mintFake)
 		var unauth *domain.ErrUnauthenticated

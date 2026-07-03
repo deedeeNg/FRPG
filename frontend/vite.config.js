@@ -15,6 +15,7 @@ export default defineConfig({
       // Forward backend calls so they're same-origin (no CORS needed in dev).
       '/api': { target, changeOrigin: true },
       '/auth': { target, changeOrigin: true },
+      '/signup': { target, changeOrigin: true },
     },
   },
 })
