@@ -3,30 +3,59 @@ import { ThemeProvider, useTheme } from './theme'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Landing from './pages/Landing'
-import Profile from './pages/Profile'
+import Map from './pages/Map'
+import Learning from './pages/Learning'
+import Settings from './pages/Settings'
 import ThemeToggle from './components/ThemeToggle'
+import Sidebar from './components/Sidebar'
+import ConfirmDialog from './components/ConfirmDialog'
 import { login, signup, fetchMe } from './api/auth'
 import { getGoogleToken } from './api/google'
 import { getFacebookToken } from './api/facebook'
 
 // Demo harness + session gate. Unauthenticated: Login / Sign up. Once a valid JWT
-// session exists (verified via GET /api/me): Landing / Profile. In production,
-// replace the switcher with your router and guard routes on the session.
+// session exists (verified via GET /api/me): side navbar with Map / Learning /
+// Settings. In production, replace the switcher with your router and guard
+// routes on the session.
 function Screen() {
   const { theme: t } = useTheme()
   const [session, setSession] = useState(null) // { userId, email } | null
   const [screen, setScreen] = useState('login')
   const [ready, setReady] = useState(false)
 
+  // Sidebar collapse state, persisted in a cookie the shadcn way.
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const m = typeof document !== 'undefined' && document.cookie.match(/(?:^|; )sidebar_state=([^;]+)/)
+    return m ? m[1] === 'true' : true
+  })
+  const toggleSidebar = () =>
+    setSidebarOpen((o) => {
+      const next = !o
+      document.cookie = `sidebar_state=${next}; path=/; max-age=${60 * 60 * 24 * 7}`
+      return next
+    })
+
   // On load, verify any stored token against the backend before trusting it.
   useEffect(() => {
     fetchMe().then((user) => {
       if (user) {
         setSession(user)
-        setScreen('landing')
+        setScreen('home')
       }
       setReady(true)
     })
+  }, [])
+
+  // shadcn keyboard shortcut: cmd/ctrl+b toggles the sidebar.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        toggleSidebar()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   // After a successful login/sign-up the token is already stored; verify it the
@@ -34,13 +63,16 @@ function Screen() {
   const enterApp = async () => {
     const user = await fetchMe()
     setSession(user)
-    setScreen(user ? 'landing' : 'login')
+    setScreen(user ? 'home' : 'login')
   }
+
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   const logout = () => {
     localStorage.removeItem('frpg_token')
     setSession(null)
     setScreen('login')
+    setConfirmLogout(false)
   }
 
   // OAuth flow shared by Login and Sign up (find-or-create on the backend).
@@ -66,10 +98,57 @@ function Screen() {
     boxShadow: active ? `0 1px 3px ${t.tabShadow}` : 'none',
   })
 
-  // Nav depends on the session: logged out vs logged in.
-  const navButtons = session
-    ? [['landing', 'Landing'], ['profile', 'Profile']]
-    : [['login', 'Login'], ['signup', 'Sign up']]
+  // Nav depends on the session: logged in uses the side navbar (see Sidebar);
+  // logged out uses the login/signup tab pair below.
+  const navButtons = [['login', 'Login'], ['signup', 'Sign up']]
+
+  if (ready && session) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
+        <Sidebar
+          open={sidebarOpen}
+          onToggle={toggleSidebar}
+          active={screen}
+          onSelect={setScreen}
+          onLogout={() => setConfirmLogout(true)}
+        />
+        <div
+          style={{
+            position: 'relative',
+            flex: 1,
+            height: '100vh',
+            overflowY: 'auto',
+            background: t.page,
+            fontFamily: "'Public Sans', system-ui, sans-serif",
+            color: t.ink,
+            transition: 'background .2s, color .2s',
+          }}
+        >
+          <ThemeToggle />
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 24px 64px' }}>
+            {screen === 'map' ? (
+              <Map />
+            ) : screen === 'learning' ? (
+              <Learning />
+            ) : screen === 'settings' ? (
+              <Settings />
+            ) : (
+              <Landing onSelectSkill={(skill) => console.log('selected skill', skill.key)} />
+            )}
+          </div>
+        </div>
+        <ConfirmDialog
+          open={confirmLogout}
+          title="Log out?"
+          description="You'll be signed out of FRPG and need to log in again to continue."
+          cancelLabel="Cancel"
+          actionLabel="Log out"
+          onCancel={() => setConfirmLogout(false)}
+          onConfirm={logout}
+        />
+      </div>
+    )
+  }
 
   return (
     <div
@@ -112,36 +191,30 @@ function Screen() {
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: 'auto 0' }}>
         {!ready ? (
           <p style={{ fontSize: 14, color: t.soft }}>Loading…</p>
-        ) : !session ? (
-          screen === 'signup' ? (
-            <SignUp
-              onSubmit={async ({ email, password }) => {
-                // Creates the local account and logs in; SignUp shows any error
-                // (e.g. email already registered) in its banner.
-                const jwt = await signup(email, password)
-                localStorage.setItem('frpg_token', jwt)
-                await enterApp()
-              }}
-              onProvider={handleProvider}
-              onLogin={() => setScreen('login')}
-            />
-          ) : (
-            <Login
-              onSubmit={async (creds) => {
-                // Throws on bad credentials; Login catches it and shows the error.
-                const jwt = await login('local', creds)
-                localStorage.setItem('frpg_token', jwt)
-                await enterApp()
-              }}
-              onProvider={handleProvider}
-              onForgot={() => console.log('forgot password')}
-              onSignup={() => setScreen('signup')}
-            />
-          )
-        ) : screen === 'profile' ? (
-          <Profile user={session} onLogout={logout} />
+        ) : screen === 'signup' ? (
+          <SignUp
+            onSubmit={async ({ email, password }) => {
+              // Creates the local account and logs in; SignUp shows any error
+              // (e.g. email already registered) in its banner.
+              const jwt = await signup(email, password)
+              localStorage.setItem('frpg_token', jwt)
+              await enterApp()
+            }}
+            onProvider={handleProvider}
+            onLogin={() => setScreen('login')}
+          />
         ) : (
-          <Landing onSelectSkill={(skill) => console.log('selected skill', skill.key)} />
+          <Login
+            onSubmit={async (creds) => {
+              // Throws on bad credentials; Login catches it and shows the error.
+              const jwt = await login('local', creds)
+              localStorage.setItem('frpg_token', jwt)
+              await enterApp()
+            }}
+            onProvider={handleProvider}
+            onForgot={() => console.log('forgot password')}
+            onSignup={() => setScreen('signup')}
+          />
         )}
       </div>
     </div>
