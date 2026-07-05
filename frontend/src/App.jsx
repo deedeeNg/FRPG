@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ThemeProvider, useTheme } from './theme'
+import { LanguageProvider, useLanguage } from './i18n'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Landing from './pages/Landing'
@@ -19,6 +20,7 @@ import { getFacebookToken } from './api/facebook'
 // routes on the session.
 function Screen() {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
   const [session, setSession] = useState(null) // { userId, email } | null
   const [screen, setScreen] = useState('login')
   const [ready, setReady] = useState(false)
@@ -100,7 +102,7 @@ function Screen() {
 
   // Nav depends on the session: logged in uses the side navbar (see Sidebar);
   // logged out uses the login/signup tab pair below.
-  const navButtons = [['login', 'Login'], ['signup', 'Sign up']]
+  const navButtons = [['login', tr('auth.tab.login')], ['signup', tr('auth.tab.signup')]]
 
   if (ready && session) {
     return (
@@ -139,10 +141,10 @@ function Screen() {
         </div>
         <ConfirmDialog
           open={confirmLogout}
-          title="Log out?"
-          description="You'll be signed out of FRPG and need to log in again to continue."
-          cancelLabel="Cancel"
-          actionLabel="Log out"
+          title={tr('logout.title')}
+          description={tr('logout.desc')}
+          cancelLabel={tr('common.cancel')}
+          actionLabel={tr('logout.action')}
           onCancel={() => setConfirmLogout(false)}
           onConfirm={logout}
         />
@@ -190,7 +192,7 @@ function Screen() {
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: 'auto 0' }}>
         {!ready ? (
-          <p style={{ fontSize: 14, color: t.soft }}>Loading…</p>
+          <p style={{ fontSize: 14, color: t.soft }}>{tr('common.loading')}</p>
         ) : screen === 'signup' ? (
           <SignUp
             onSubmit={async ({ email, password }) => {
@@ -224,7 +226,9 @@ function Screen() {
 export default function App() {
   return (
     <ThemeProvider>
-      <Screen />
+      <LanguageProvider>
+        <Screen />
+      </LanguageProvider>
     </ThemeProvider>
   )
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTheme } from '../theme'
+import { useLanguage } from '../i18n'
 
 // shadcn sidebar widths: --sidebar-width 16rem, --sidebar-width-icon ~3.5rem.
 const WIDTH = 256
@@ -59,11 +60,12 @@ const LogOutIcon = () => (
   </Icon>
 )
 
+// Labels resolve through i18n at render time via `nav.<key>`.
 const TABS = [
-  { key: 'home', label: 'Home', Glyph: HomeIcon },
-  { key: 'map', label: 'Map', Glyph: MapIcon },
-  { key: 'learning', label: 'Learning', Glyph: LearningIcon },
-  { key: 'settings', label: 'Settings', Glyph: SettingsIcon },
+  { key: 'home', Glyph: HomeIcon },
+  { key: 'map', Glyph: MapIcon },
+  { key: 'learning', Glyph: LearningIcon },
+  { key: 'settings', Glyph: SettingsIcon },
 ]
 
 // shadcn-style side navbar. Collapses between full width and an icon-only rail;
@@ -71,6 +73,7 @@ const TABS = [
 // keyboard shortcut (cmd/ctrl+b) and cookie persistence.
 export default function Sidebar({ open, onToggle, active, onSelect, onLogout }) {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
   const [hover, setHover] = useState(null)
 
   // shadcn SidebarMenuButton: rounded row, icon + label, hover/active = accent bg.
@@ -129,8 +132,8 @@ export default function Sidebar({ open, onToggle, active, onSelect, onLogout }) 
       >
         <button
           type="button"
-          aria-label="Main menu"
-          title="Main menu"
+          aria-label={tr('nav.mainMenu')}
+          title={tr('nav.mainMenu')}
           onClick={onToggle}
           onMouseEnter={() => setHover('menu')}
           onMouseLeave={() => setHover(null)}
@@ -194,37 +197,40 @@ export default function Sidebar({ open, onToggle, active, onSelect, onLogout }) 
               padding: '4px 10px 6px',
             }}
           >
-            Platform
+            {tr('nav.platform')}
           </div>
         )}
-        {TABS.map(({ key, label, Glyph }) => (
-          <button
-            key={key}
-            type="button"
-            title={open ? undefined : label}
-            onClick={() => onSelect(key)}
-            onMouseEnter={() => setHover(key)}
-            onMouseLeave={() => setHover(null)}
-            style={item(active === key, hover === key)}
-          >
-            <Glyph />
-            {open && label}
-          </button>
-        ))}
+        {TABS.map(({ key, Glyph }) => {
+          const label = tr('nav.' + key)
+          return (
+            <button
+              key={key}
+              type="button"
+              title={open ? undefined : label}
+              onClick={() => onSelect(key)}
+              onMouseEnter={() => setHover(key)}
+              onMouseLeave={() => setHover(null)}
+              style={item(active === key, hover === key)}
+            >
+              <Glyph />
+              {open && label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Footer */}
       <div style={{ marginTop: 'auto', padding: 8, borderTop: `1px solid ${t.border}` }}>
         <button
           type="button"
-          title={open ? undefined : 'Log Out'}
+          title={open ? undefined : tr('nav.logout')}
           onClick={onLogout}
           onMouseEnter={() => setHover('logout')}
           onMouseLeave={() => setHover(null)}
           style={item(false, hover === 'logout')}
         >
           <LogOutIcon />
-          {open && 'Log Out'}
+          {open && tr('nav.logout')}
         </button>
       </div>
 

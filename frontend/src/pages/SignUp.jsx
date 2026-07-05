@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTheme } from '../theme'
+import { useLanguage } from '../i18n'
 import BrandMark from '../components/BrandMark'
 import TextField from '../components/TextField'
 import SocialButton from '../components/SocialButton'
@@ -14,6 +15,7 @@ import { useHover } from '../hooks/useHover'
  */
 export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = true }) {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -29,18 +31,18 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
     if (!onSubmit || busy) return
     setError('')
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(tr('error.passwordShort'))
       return
     }
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setError(tr('error.passwordMismatch'))
       return
     }
     setLoading(true)
     try {
       await onSubmit({ email, password })
     } catch (err) {
-      setError(err.message || 'Something went wrong')
+      setError(err.message || tr('error.generic'))
     } finally {
       setLoading(false)
     }
@@ -53,7 +55,7 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
     try {
       await onProvider(id)
     } catch (err) {
-      setError(err.message || 'Something went wrong')
+      setError(err.message || tr('error.generic'))
     } finally {
       setBusyProvider('')
     }
@@ -109,12 +111,12 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
             color: t.ink,
           }}
         >
-          Create your account
+          {tr('auth.create')}
         </h1>
-        <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>Start your quest to fluency.</p>
+        <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>{tr('auth.create.sub')}</p>
 
         <TextField
-          label="Email"
+          label={tr('field.email')}
           type="email"
           name="email"
           placeholder="you@example.com"
@@ -123,7 +125,7 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
           onChange={(e) => setEmail(e.target.value)}
         />
         <TextField
-          label="Password"
+          label={tr('field.password')}
           type="password"
           name="password"
           placeholder="••••••••"
@@ -132,7 +134,7 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
           onChange={(e) => setPassword(e.target.value)}
         />
         <TextField
-          label="Confirm password"
+          label={tr('field.confirmPassword')}
           type="password"
           name="confirm"
           placeholder="••••••••"
@@ -155,21 +157,21 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
           style={{ ...primaryBtn, ...(busy ? { opacity: 0.7, cursor: 'not-allowed' } : {}) }}
           {...hoverBind}
         >
-          {loading ? 'Creating account…' : 'Create account'}
+          {loading ? tr('auth.creatingAccount') : tr('auth.createAccount')}
         </button>
 
         {showSocial && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
               <span style={{ flex: 1, height: 1, background: t.divider }} />
-              <span style={{ fontSize: 11.5, color: t.faint, letterSpacing: '.04em' }}>or sign up with</span>
+              <span style={{ fontSize: 11.5, color: t.faint, letterSpacing: '.04em' }}>{tr('auth.orSignup')}</span>
               <span style={{ flex: 1, height: 1, background: t.divider }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {providers.map((p) => (
                 <SocialButton
                   key={p.id}
-                  label={busyProvider === p.id ? 'Connecting…' : p.label}
+                  label={busyProvider === p.id ? tr('common.connecting') : tr('provider.' + p.id)}
                   mark={p.mark}
                   markSize={p.markSize}
                   disabled={busy}
@@ -182,9 +184,9 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
       </div>
 
       <p style={{ textAlign: 'center', fontSize: 13.5, color: t.soft, margin: '22px 0 0' }}>
-        Already have an account?{' '}
+        {tr('auth.haveAccount')}{' '}
         <button type="button" onClick={onLogin} style={{ ...linkBtn, fontWeight: 700, fontSize: 13.5 }}>
-          Log in
+          {tr('auth.login')}
         </button>
       </p>
     </form>

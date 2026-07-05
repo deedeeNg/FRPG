@@ -1,4 +1,5 @@
 import { useTheme } from '../theme'
+import { useLanguage } from '../i18n'
 import { useHover } from '../hooks/useHover'
 
 const SHAPES = {
@@ -10,6 +11,7 @@ const SHAPES = {
 
 export default function SkillCard({ skill, onClick }) {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
   const [hovered, hoverBind] = useHover()
 
   const btn = {
@@ -47,7 +49,7 @@ export default function SkillCard({ skill, onClick }) {
         <span style={{ width: 22, height: 22, display: 'block', background: skill.color, ...(SHAPES[skill.shape] || SHAPES.circle) }} />
       </span>
       <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-        <span style={{ fontSize: 15.5, fontWeight: 700 }}>{skill.label}</span>
+        <span style={{ fontSize: 15.5, fontWeight: 700 }}>{tr('skill.' + skill.key)}</span>
         <span style={{ fontSize: 12.5, color: t.mute, fontStyle: 'italic', marginTop: 2 }}>{skill.fr}</span>
       </span>
     </button>

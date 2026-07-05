@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTheme } from '../theme'
+import { useLanguage } from '../i18n'
 import BrandMark from '../components/BrandMark'
 import TextField from '../components/TextField'
 import SocialButton from '../components/SocialButton'
@@ -15,6 +16,7 @@ import { useHover } from '../hooks/useHover'
  */
 export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSocial = true }) {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,7 +34,7 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
     try {
       await onSubmit({ email, password })
     } catch (err) {
-      setError(err.message || 'Something went wrong')
+      setError(err.message || tr('error.generic'))
     } finally {
       setLoading(false)
     }
@@ -45,7 +47,7 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
     try {
       await onProvider(id)
     } catch (err) {
-      setError(err.message || 'Something went wrong')
+      setError(err.message || tr('error.generic'))
     } finally {
       setBusyProvider('')
     }
@@ -101,12 +103,12 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
             color: t.ink,
           }}
         >
-          Welcome back
+          {tr('auth.welcome')}
         </h1>
-        <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>Continue your quest to fluency.</p>
+        <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>{tr('auth.welcome.sub')}</p>
 
         <TextField
-          label="Email"
+          label={tr('field.email')}
           type="email"
           name="email"
           placeholder="you@example.com"
@@ -115,7 +117,7 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
           onChange={(e) => setEmail(e.target.value)}
         />
         <TextField
-          label="Password"
+          label={tr('field.password')}
           type="password"
           name="password"
           placeholder="••••••••"
@@ -147,21 +149,21 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
           style={{ ...primaryBtn, ...(busy ? { opacity: 0.7, cursor: 'not-allowed' } : {}) }}
           {...hoverBind}
         >
-          {loading ? 'Logging in…' : 'Log in'}
+          {loading ? tr('auth.loggingIn') : tr('auth.login')}
         </button>
 
         {showSocial && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
               <span style={{ flex: 1, height: 1, background: t.divider }} />
-              <span style={{ fontSize: 11.5, color: t.faint, letterSpacing: '.04em' }}>or continue with</span>
+              <span style={{ fontSize: 11.5, color: t.faint, letterSpacing: '.04em' }}>{tr('auth.orContinue')}</span>
               <span style={{ flex: 1, height: 1, background: t.divider }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {providers.map((p) => (
                 <SocialButton
                   key={p.id}
-                  label={busyProvider === p.id ? 'Connecting…' : p.label}
+                  label={busyProvider === p.id ? tr('common.connecting') : tr('provider.' + p.id)}
                   mark={p.mark}
                   markSize={p.markSize}
                   disabled={busy}
@@ -174,9 +176,9 @@ export default function Login({ onSubmit, onProvider, onForgot, onSignup, showSo
       </div>
 
       <p style={{ textAlign: 'center', fontSize: 13.5, color: t.soft, margin: '22px 0 0' }}>
-        New adventurer?{' '}
+        {tr('auth.newAdventurer')}{' '}
         <button type="button" onClick={onSignup} style={{ ...linkBtn, fontWeight: 700, fontSize: 13.5 }}>
-          Create an account
+          {tr('auth.createOne')}
         </button>
       </p>
     </form>
