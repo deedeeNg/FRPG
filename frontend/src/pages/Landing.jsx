@@ -1,4 +1,5 @@
 import { useTheme } from '../theme'
+import { useLanguage } from '../i18n'
 import BrandMark from '../components/BrandMark'
 import SkillCard from '../components/SkillCard'
 import { skills } from '../data/skills'
@@ -10,6 +11,7 @@ import { skills } from '../data/skills'
  */
 export default function Landing({ onSelectSkill, showHero = true }) {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
 
   return (
     <div style={{ width: '100%', maxWidth: 620 }}>
@@ -43,7 +45,7 @@ export default function Landing({ onSelectSkill, showHero = true }) {
               letterSpacing: '.02em',
             }}
           >
-            hero illustration
+            {tr('landing.hero')}
           </span>
         </div>
       )}
@@ -60,10 +62,10 @@ export default function Landing({ onSelectSkill, showHero = true }) {
           color: t.ink,
         }}
       >
-        Master French, one quest at a time.
+        {tr('landing.title')}
       </h1>
       <p style={{ margin: '0 0 26px', fontSize: 15, color: t.soft, maxWidth: '44ch' }}>
-        Pick a skill to begin your daily adventure. Choose your path.
+        {tr('landing.subtitle')}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 13 }}>

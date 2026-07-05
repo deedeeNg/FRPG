@@ -1,4 +1,5 @@
 import { useTheme } from '../theme'
+import { useLanguage } from '../i18n'
 import { useHover } from '../hooks/useHover'
 
 /**
@@ -7,6 +8,7 @@ import { useHover } from '../hooks/useHover'
  */
 export default function Profile({ user, onLogout }) {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
   const [hovered, hoverBind] = useHover()
 
   const email = user?.email || ''
@@ -56,7 +58,7 @@ export default function Profile({ user, onLogout }) {
             color: t.ink,
           }}
         >
-          Profile
+          {tr('profile.title')}
         </h1>
         {email && <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>{email}</p>}
 
@@ -78,7 +80,7 @@ export default function Profile({ user, onLogout }) {
           }}
           {...hoverBind}
         >
-          Log out
+          {tr('profile.logout')}
         </button>
       </div>
     </div>

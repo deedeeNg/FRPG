@@ -1,11 +1,14 @@
 import { useTheme } from '../theme'
+import { useLanguage } from '../i18n'
 
 export default function BrandMark({
   name = 'FRPG',
-  tagline = 'Learn French. Level up.',
+  tagline,
   showTagline = false,
 }) {
   const { theme: t } = useTheme()
+  const { t: tr } = useLanguage()
+  const taglineText = tagline ?? tr('brand.tagline')
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
       <span
@@ -36,7 +39,7 @@ export default function BrandMark({
           {name}
         </span>
         {showTagline && (
-          <span style={{ fontSize: 11.5, color: t.mute, letterSpacing: '.02em', marginTop: 4 }}>{tagline}</span>
+          <span style={{ fontSize: 11.5, color: t.mute, letterSpacing: '.02em', marginTop: 4 }}>{taglineText}</span>
         )}
       </div>
     </div>

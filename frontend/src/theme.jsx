@@ -35,23 +35,46 @@ export const darkTheme = {
 
 const STORAGE_KEY = 'frpg-theme'
 
-const ThemeContext = createContext({ theme: lightTheme, dark: false, toggle: () => {} })
+// Theme mode: an explicit 'light'/'dark' choice, or 'system' to follow the OS
+// via prefers-color-scheme. `dark` below is the resolved boolean.
+export const THEME_MODES = ['light', 'dark', 'system']
 
-export function ThemeProvider({ children, defaultDark = false }) {
-  const [dark, setDark] = useState(() => {
-    if (typeof window === 'undefined') return defaultDark
+function systemPrefersDark() {
+  return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+const ThemeContext = createContext({ theme: lightTheme, dark: false, mode: 'system', setMode: () => {}, toggle: () => {} })
+
+export function ThemeProvider({ children, defaultMode = 'system' }) {
+  const [mode, setMode] = useState(() => {
+    if (typeof window === 'undefined') return defaultMode
     const saved = window.localStorage.getItem(STORAGE_KEY)
-    return saved ? saved === 'dark' : defaultDark
+    return THEME_MODES.includes(saved) ? saved : defaultMode
   })
 
+  // Track the OS preference so 'system' mode reacts live.
+  const [systemDark, setSystemDark] = useState(systemPrefersDark)
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light')
-  }, [dark])
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = (e) => setSystemDark(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY, mode)
+  }, [mode])
+
+  const dark = mode === 'system' ? systemDark : mode === 'dark'
 
   const value = {
     theme: dark ? darkTheme : lightTheme,
     dark,
-    toggle: () => setDark((d) => !d),
+    mode,
+    setMode,
+    // Quick top-right switch: pin to the opposite of what's showing now.
+    toggle: () => setMode(dark ? 'light' : 'dark'),
   }
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
