@@ -91,7 +91,7 @@ export default function StatHexagon({ scores = attributeScores, size = 300 }) {
             y={p.y}
             textAnchor={anchor}
             dominantBaseline="middle"
-            fontSize={12}
+            fontSize={16}
             fontWeight={700}
             fill={t.soft}
             style={{ fontFamily: "'Public Sans', system-ui, sans-serif" }}
