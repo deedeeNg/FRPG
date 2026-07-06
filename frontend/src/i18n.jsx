@@ -66,6 +66,8 @@ const strings = {
     'skill.listening': 'Listening',
     'skill.reading': 'Reading',
     'skill.writing': 'Writing',
+    'skill.grammar': 'Grammar',
+    'skill.vocabulary': 'Vocabulary',
 
     // Character attribute hexagon
     'stats.title': 'Character attributes',
@@ -155,6 +157,8 @@ const strings = {
     'skill.listening': 'Nghe',
     'skill.reading': 'Đọc',
     'skill.writing': 'Viết',
+    'skill.grammar': 'Ngữ pháp',
+    'skill.vocabulary': 'Từ vựng',
 
     // Character attribute hexagon
     'stats.title': 'Thuộc tính nhân vật',

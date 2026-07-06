@@ -7,6 +7,8 @@ const SHAPES = {
   diamond: { transform: 'rotate(45deg)', borderRadius: 3 },
   square: { borderRadius: 6 },
   triangle: { clipPath: 'polygon(50% 0, 100% 100%, 0 100%)' },
+  pentagon: { clipPath: 'polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%)' },
+  hexagon: { clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)' },
 }
 
 export default function SkillCard({ skill, onClick }) {
