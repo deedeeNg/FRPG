@@ -68,6 +68,13 @@ export function ThemeProvider({ children, defaultMode = 'system' }) {
 
   const dark = mode === 'system' ? systemDark : mode === 'dark'
 
+  // Make native UI (scrollbars, form controls) match the active mode so the
+  // page scrollbar blends with the background instead of standing out.
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+  }, [dark])
+
   const value = {
     theme: dark ? darkTheme : lightTheme,
     dark,
