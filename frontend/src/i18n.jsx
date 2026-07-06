@@ -67,6 +67,15 @@ const strings = {
     'skill.reading': 'Reading',
     'skill.writing': 'Writing',
 
+    // Character attribute hexagon
+    'stats.title': 'Character attributes',
+    'attr.listening': 'Listening',
+    'attr.reading': 'Reading',
+    'attr.writing': 'Writing',
+    'attr.speaking': 'Speaking',
+    'attr.vocabulary': 'Vocabulary',
+    'attr.grammar': 'Grammar',
+
     // Sidebar / nav
     'nav.home': 'Home',
     'nav.map': 'Map',
@@ -146,6 +155,15 @@ const strings = {
     'skill.listening': 'Nghe',
     'skill.reading': 'Đọc',
     'skill.writing': 'Viết',
+
+    // Character attribute hexagon
+    'stats.title': 'Thuộc tính nhân vật',
+    'attr.listening': 'Nghe',
+    'attr.reading': 'Đọc',
+    'attr.writing': 'Viết',
+    'attr.speaking': 'Nói',
+    'attr.vocabulary': 'Từ vựng',
+    'attr.grammar': 'Ngữ pháp',
 
     // Sidebar / nav
     'nav.home': 'Trang chủ',
