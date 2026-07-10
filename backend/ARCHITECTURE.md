@@ -300,6 +300,29 @@ Consequence: **one account per email** (a Google login and a password account ca
 share `you@x.com`). Multi-account-per-email or explicit account linking would need a
 `sub`-keyed lookup (see CONSIDERATIONS) — deferred.
 
+## Storage — DynamoDB (decided; when to revisit)
+
+**Decision:** stay on **DynamoDB** for now (auth already uses it; exercises/progress
+will too).
+
+Rationale: the hot path is **key-based reads** — "get the exercises for this map node /
+lesson at difficulty Y" — which is DynamoDB's sweet spot (single-digit-ms `Query` by
+partition + sort key; scales fine on reads). Exercise content is small and highly
+cacheable, so read volume from moving around the map isn't a concern. Note: *"we read a
+lot" is **not** a reason to prefer NoSQL* — DynamoDB is strong at key reads, not just
+writes. The real axis is **known, key-based access** (favors Dynamo) vs **ad-hoc /
+relational queries** (favors SQL).
+
+**Revisit — consider Postgres (+ JSONB for the flexible `content`/`answer` payloads) — if we hit:**
+- **Ad-hoc / still-evolving queries:** DynamoDB needs a key or GSI pre-designed per
+  access pattern; an unplanned query means an expensive scan. SQL queries freely.
+- **Relational reporting:** cross-entity joins/aggregations (learner progress across
+  skills, item-quality analytics) are natural in SQL, awkward in Dynamo.
+
+**Low-risk to defer:** storage is an **adapter behind a `domain` port** (`Repository`,
+and a future `ExerciseStore`), so `app`/`domain` never see the concrete DB — we can swap
+the adapter later with minimal blast radius.
+
 ## Next goals / things to consider
 
 _(none open — see CONSIDERATIONS.md for parked items, e.g. explicit sign-up.)_
