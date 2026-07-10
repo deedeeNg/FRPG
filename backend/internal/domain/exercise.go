@@ -51,48 +51,48 @@ var ErrExerciseNotFound = errors.New("exercise not found")
 // flexibility argument.
 type Exercise struct {
 	// ID is the primary key, "ex_<...>" (e.g. "ex_a2_art_0007").
-	ID string `dynamodbav:"exerciseId"`
+	ID string `dynamodbav:"exerciseId" json:"exerciseId"`
 
 	// Skill is the delivery modality: one of the Skill* constants. Drives which
 	// Prompt fields are meaningful (e.g. listening ⇒ AudioURL, not Text).
-	Skill string `dynamodbav:"skill"`
+	Skill string `dynamodbav:"skill" json:"skill"`
 
 	// Format is the answer shape and the discriminator for Content/Answer: one of
 	// the Format* constants. A per-format Grader reads Answer to score.
-	Format string `dynamodbav:"format"`
+	Format string `dynamodbav:"format" json:"format"`
 
 	// Level is the CEFR level (Level* constants). It is a *contract*: every token in
 	// the item must fit that level's grammar+vocab whitelist (enforced later by the
 	// validator gauntlet, not here). It also selects which items a learner sees.
-	Level string `dynamodbav:"level"`
+	Level string `dynamodbav:"level" json:"level"`
 
 	// Contrast is the machine-checkable pedagogical intent — what makes this "a
 	// question with a point" rather than "a question". Inline value object.
-	Contrast TargetContrast `dynamodbav:"contrast"`
+	Contrast TargetContrast `dynamodbav:"contrast" json:"contrast"`
 
 	// Prompt is the stimulus the learner perceives. Inline value object; which of
 	// its fields are filled *is* the modality.
-	Prompt Prompt `dynamodbav:"prompt"`
+	Prompt Prompt `dynamodbav:"prompt" json:"prompt"`
 
 	// Content is the format-specific apparatus the learner manipulates (choices,
 	// blank template…). Open map so a new Format needs no schema change. It is
 	// client-safe and NEVER contains the key — the key lives in Answer.
-	Content map[string]any `dynamodbav:"content"`
+	Content map[string]any `dynamodbav:"content" json:"content"`
 
 	// Answer is the format-specific grading spec (correct ids, accepted strings…).
 	// SERVER-ONLY: strip before sending an item to the client.
-	Answer map[string]any `dynamodbav:"answer"`
+	Answer map[string]any `dynamodbav:"answer" json:"answer"`
 
 	// Source is the coarse provenance bucket: one of the Source* constants.
-	Source string `dynamodbav:"source"`
+	Source string `dynamodbav:"source" json:"source"`
 
 	// Origin is fine-grained provenance (which model/template/refs produced it,
 	// whether a human reviewed it). Inline value object; drives auditing and the
 	// generation flywheel. Distinct from Source, which is only the bucket.
-	Origin Origin `dynamodbav:"origin"`
+	Origin Origin `dynamodbav:"origin" json:"origin"`
 
 	// CreatedAt is RFC3339.
-	CreatedAt string `dynamodbav:"createdAt"`
+	CreatedAt string `dynamodbav:"createdAt" json:"createdAt"`
 }
 
 // TargetContrast is what the item makes the learner think about — the field that
@@ -103,16 +103,16 @@ type TargetContrast struct {
 	// SkillPoint is the pedagogical category (one of the SkillPoint* constants). It
 	// selects which validator runs, which mastery bucket an attempt updates, and
 	// which templates are eligible.
-	SkillPoint string `dynamodbav:"skillPoint"`
+	SkillPoint string `dynamodbav:"skillPoint" json:"skillPoint"`
 
 	// Lemma is the specific word under test — MAY be empty. Set for word-level
 	// grammar drills so the morphology gate can assert "all choices are inflections
 	// of this word"; empty for comprehension items (nothing single-word to check).
-	Lemma string `dynamodbav:"lemma"`
+	Lemma string `dynamodbav:"lemma" json:"lemma"`
 
 	// Feature is the axis the answer varies on (e.g. "person", "gender") — MAY be
 	// empty. When set, distractors must differ from the key ONLY on this axis.
-	Feature string `dynamodbav:"feature"`
+	Feature string `dynamodbav:"feature" json:"feature"`
 }
 
 // Prompt is the stimulus the learner perceives before answering. It is multi-field
@@ -120,21 +120,21 @@ type TargetContrast struct {
 // modality. Load-bearing rule: a listening item sets AudioURL and leaves Text empty
 // (showing the transcript would defeat listening). Stored inline in Exercise.
 type Prompt struct {
-	Instructions string `dynamodbav:"instructions"` // the task line; always set
-	Text         string `dynamodbav:"text"`         // written stimulus; reading/writing
-	AudioURL     string `dynamodbav:"audioUrl"`     // audio asset pointer; listening
-	ImageURL     string `dynamodbav:"imageUrl"`     // picture; picture-description tasks
+	Instructions string `dynamodbav:"instructions" json:"instructions"` // the task line; always set
+	Text         string `dynamodbav:"text" json:"text"`                 // written stimulus; reading/writing
+	AudioURL     string `dynamodbav:"audioUrl" json:"audioUrl"`         // audio asset pointer; listening
+	ImageURL     string `dynamodbav:"imageUrl" json:"imageUrl"`         // picture; picture-description tasks
 }
 
 // Origin is fine-grained provenance for one item: enough to audit it and to power
 // the generation flywheel (regenerate everything from a bad prompt version, prefer
 // human-reviewed items, etc.). Stored inline in Exercise.
 type Origin struct {
-	Model         string   `dynamodbav:"model"`         // generating model id; empty for template/human
-	PromptVersion string   `dynamodbav:"promptVersion"` // template or prompt version, e.g. "tmpl-articles-v1"
-	RetrievedRefs []string `dynamodbav:"retrievedRefs"` // source refs (corpus ids/urls) if retrieval-grounded
-	Reviewed      bool     `dynamodbav:"reviewed"`      // a human approved this item
-	CreatedBy     string   `dynamodbav:"createdBy"`     // pipeline/tool/user that produced it
+	Model         string   `dynamodbav:"model" json:"model"`                 // generating model id; empty for template/human
+	PromptVersion string   `dynamodbav:"promptVersion" json:"promptVersion"` // template or prompt version, e.g. "tmpl-articles-v1"
+	RetrievedRefs []string `dynamodbav:"retrievedRefs" json:"retrievedRefs"` // source refs (corpus ids/urls) if retrieval-grounded
+	Reviewed      bool     `dynamodbav:"reviewed" json:"reviewed"`           // a human approved this item
+	CreatedBy     string   `dynamodbav:"createdBy" json:"createdBy"`         // pipeline/tool/user that produced it
 }
 
 // Skill values (delivery modality).

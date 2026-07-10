@@ -53,6 +53,28 @@ services:
       - ./backend:/app
       - go-mod-cache:/go/pkg/mod
 
+  # One-shot: generate exercises and import them into the Exercises table. Goes
+  # through the exercises.jsonl handoff (gen-exercises | import-exercises), the
+  # same path the future Python pipeline will use.
+  #   docker compose --profile seed up exercise-seed
+  exercise-seed:
+    image: golang:1.22
+    profiles: ["seed"]
+    working_dir: /app
+    depends_on:
+      - dynamodb-local
+    environment:
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - AWS_REGION=local
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - EXERCISES_TABLE=Exercises
+      - GOFLAGS=-mod=mod
+    command: ["sh", "-c", "go run ./cmd/gen-exercises | go run ./cmd/import-exercises"]
+    volumes:
+      - ./backend:/app
+      - go-mod-cache:/go/pkg/mod
+
   backend:
     build:
       context: ./backend

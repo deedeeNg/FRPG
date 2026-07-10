@@ -1,0 +1,144 @@
+# A1 level pack — the source of truth for what A1 teaches and the curated lexicon
+# that feeds generation. Grammar/skill inventory taken from the Édito A1 Tableau des
+# contenus (Didier FLE 2022) — facts only, no content copied. The Go generator (and
+# later the Python pipeline) READ this instead of hardcoding.
+#
+# Each `teaches` entry is a grammar point (skill contrast). `kind` selects the
+# generation procedure; distractors come from the data here (no LLM), so every item
+# is correct by construction:
+#   conjugation — blank a verb; distractors = other persons of the same lemma.
+#   agreement   — blank an agreeing word; key from keyByGender; distractors = options.
+#   lookup      — blank a slot with a fixed answer per row; distractors = options.
+#
+# NOTE: lives under backend/ for now so the Go tool, tests, and docker-compose all
+# find it with a simple path. Hoist to a top-level content/ when Python shares it.
+
+code: A1
+skill: reading            # delivery modality for v0
+format: multiple_choice   # answer shape for v0
+
+# Shared noun list (gender), reused by every agreement point via the *nouns alias.
+# Consonant-initial so articles stay le/la (never l') and "ce"/"mon" need no elision.
+_nouns: &nouns
+  - { word: maison,  gender: f }
+  - { word: livre,   gender: m }
+  - { word: table,   gender: f }
+  - { word: chat,    gender: m }
+  - { word: voiture, gender: f }
+  - { word: gâteau,  gender: m }
+  - { word: fille,   gender: f }
+  - { word: garçon,  gender: m }
+  - { word: sac,     gender: m }
+  - { word: porte,   gender: f }
+
+teaches:
+  # ── Conjugation: present tense, -er/-ir/irregular verbs (unités 1–6) ─────────
+  # forms indexed je,tu,il,nous,vous,ils (0..5). persons start at index 1 ("je" is
+  # skipped to avoid stem elision "j'aime" leaking the answer's first letter).
+  # complements are chosen to read naturally across every subject (no agreement trap).
+  - id: present_verbs
+    kind: conjugation
+    skillPoint: conjugation
+    feature: person
+    instructions: "Choisissez la bonne forme du verbe."
+    promptVersion: tmpl-present-v1
+    template: "{subject} ___ {complement}."
+    persons:
+      - { subject: Tu, index: 1 }
+      - { subject: Il, index: 2 }
+      - { subject: Nous, index: 3 }
+      - { subject: Vous, index: 4 }
+      - { subject: Ils, index: 5 }
+    verbs:
+      - { lemma: parler,     complement: "français",       forms: [parle, parles, parle, parlons, parlez, parlent] }
+      - { lemma: aimer,      complement: "la musique",     forms: [aime, aimes, aime, aimons, aimez, aiment] }
+      - { lemma: habiter,    complement: "ici",            forms: [habite, habites, habite, habitons, habitez, habitent] }
+      - { lemma: travailler, complement: "beaucoup",       forms: [travaille, travailles, travaille, travaillons, travaillez, travaillent] }
+      - { lemma: regarder,   complement: "la télévision",  forms: [regarde, regardes, regarde, regardons, regardez, regardent] }
+      - { lemma: écouter,    complement: "la radio",       forms: [écoute, écoutes, écoute, écoutons, écoutez, écoutent] }
+      - { lemma: choisir,    complement: "un livre",       forms: [choisis, choisis, choisit, choisissons, choisissez, choisissent] }
+      - { lemma: finir,      complement: "le travail",     forms: [finis, finis, finit, finissons, finissez, finissent] }
+      - { lemma: être,       complement: "à Paris",        forms: [suis, es, est, sommes, êtes, sont] }
+      - { lemma: avoir,      complement: "un chat",        forms: [ai, as, a, avons, avez, ont] }
+      - { lemma: aller,      complement: "à l'école",      forms: [vais, vas, va, allons, allez, vont] }
+      - { lemma: faire,      complement: "du sport",       forms: [fais, fais, fait, faisons, faites, font] }
+      - { lemma: prendre,    complement: "le bus",         forms: [prends, prends, prend, prenons, prenez, prennent] }
+
+  # ── Definite article (le/la/les) — gender (unité 1) ─────────────────────────
+  - id: article_definite
+    kind: agreement
+    skillPoint: article_gender
+    feature: gender
+    instructions: "Choisissez le bon article."
+    promptVersion: tmpl-article-definite-v1
+    templates: ["Voici ___ {word}.", "Je vois ___ {word}.", "C'est ___ {word}."]
+    options: [le, la, les]
+    keyByGender: { m: le, f: la }
+    nouns: *nouns
+
+  # ── Indefinite article (un/une/des) — gender (unité 2) ──────────────────────
+  - id: article_indefinite
+    kind: agreement
+    skillPoint: article_indefinite
+    feature: gender
+    instructions: "Choisissez le bon article indéfini."
+    promptVersion: tmpl-article-indefinite-v1
+    templates: ["Voici ___ {word}.", "C'est ___ {word}.", "J'ai ___ {word}."]
+    options: [un, une, des]
+    keyByGender: { m: un, f: une }
+    nouns: *nouns
+
+  # ── Demonstrative adjective (ce/cette/ces) — gender (unité 5) ────────────────
+  - id: demonstrative
+    kind: agreement
+    skillPoint: demonstrative
+    feature: gender
+    instructions: "Choisissez le bon adjectif démonstratif."
+    promptVersion: tmpl-demonstrative-v1
+    templates: ["Regarde ___ {word}.", "J'aime ___ {word}."]
+    options: [ce, cette, ces]
+    keyByGender: { m: ce, f: cette }
+    nouns: *nouns
+
+  # ── Possessive adjective (mon/ma/mes) — gender (unité 2) ────────────────────
+  - id: possessive
+    kind: agreement
+    skillPoint: possessive
+    feature: gender
+    instructions: "Choisissez le bon adjectif possessif."
+    promptVersion: tmpl-possessive-v1
+    templates: ["C'est ___ {word}.", "Voici ___ {word}."]
+    options: [mon, ma, mes]
+    keyByGender: { m: mon, f: ma }
+    nouns: *nouns
+
+  # ── Interrogative adjective (quel/quelle) — gender (unité 1) ─────────────────
+  - id: interrogative_quel
+    kind: agreement
+    skillPoint: interrogative
+    feature: gender
+    instructions: "Choisissez la bonne forme de « quel »."
+    promptVersion: tmpl-quel-v1
+    templates: ["___ {word} préfères-tu ?", "___ {word} choisis-tu ?"]
+    options: [quel, quelle, quels, quelles]
+    keyByGender: { m: quel, f: quelle }
+    nouns: *nouns
+
+  # ── Preposition before country names (en/au/aux) — (unités 1, 9) ────────────
+  - id: prep_pays
+    kind: lookup
+    skillPoint: preposition
+    feature: preposition
+    instructions: "Choisissez la bonne préposition."
+    promptVersion: tmpl-prep-pays-v1
+    templates: ["Je vais ___ {filler}.", "Nous allons ___ {filler}.", "Il habite ___ {filler}."]
+    options: [en, au, aux]
+    rows:
+      - { filler: France,        key: en }
+      - { filler: Japon,         key: au }
+      - { filler: Canada,        key: au }
+      - { filler: Espagne,       key: en }
+      - { filler: Portugal,      key: au }
+      - { filler: "États-Unis",  key: aux }
+      - { filler: Italie,        key: en }
+      - { filler: Maroc,         key: au }
