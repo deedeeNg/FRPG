@@ -69,6 +69,12 @@ const strings = {
     'skill.grammar': 'Grammar',
     'skill.vocabulary': 'Vocabulary',
 
+    // HUD home screen
+    'hud.level': 'Niveau',
+    'hud.xpSuffix': 'XP',
+    'hud.attributes': 'Attributes',
+    'quest.start': '▶ START QUEST',
+
     // Character attribute hexagon
     'stats.title': 'Character attributes',
     'attr.listening': 'Listening',
@@ -159,6 +165,12 @@ const strings = {
     'skill.writing': 'Viết',
     'skill.grammar': 'Ngữ pháp',
     'skill.vocabulary': 'Từ vựng',
+
+    // HUD home screen
+    'hud.level': 'Cấp',
+    'hud.xpSuffix': 'XP',
+    'hud.attributes': 'Thuộc tính',
+    'quest.start': '▶ BẮT ĐẦU',
 
     // Character attribute hexagon
     'stats.title': 'Thuộc tính nhân vật',

@@ -7,10 +7,35 @@ import { attributes, attributeScores, MAX_SCORE } from '../data/stats'
  *   scores: { [attrKey]: number 0..MAX_SCORE }  — defaults to the seeded values.
  * Renders the 6 fixed axes from `attributes` as a hexagon, with the current
  * scores plotted as a filled polygon inside a set of concentric grid rings.
+ *
+ * Colors default to the app theme (the FRP-9 home look); the style props below
+ * let a caller re-skin it — e.g. the pixel-art HUD home screen renders it gold
+ * on dark glass with white Pixelify labels. `gridStroke` may be a color string
+ * or a function (ringIndex, ringCount) => color, where ringIndex 0 is innermost.
  */
-export default function StatHexagon({ scores = attributeScores, size = 300 }) {
+export default function StatHexagon({
+  scores = attributeScores,
+  size = 300,
+  rings = 4,
+  showDots = true,
+  gridStroke,
+  fill,
+  fillOpacity = 0.22,
+  stroke,
+  strokeWidth = 2,
+  labelColor,
+  labelFont = "'Public Sans', system-ui, sans-serif",
+  labelSize = 16,
+}) {
   const { theme: t } = useTheme()
   const { t: tr } = useLanguage()
+
+  // Fall back to theme colors when a caller doesn't override them.
+  const gridColor = gridStroke ?? t.border
+  const fillColor = fill ?? t.primary
+  const strokeColor = stroke ?? t.primary
+  const labelFill = labelColor ?? t.soft
+  const ringColor = (r) => (typeof gridColor === 'function' ? gridColor(r, rings) : gridColor)
 
   // The hexagon is square, but side labels ("Vocabulary", "Grammar") stick out
   // horizontally, so give the viewBox extra width on the left/right.
@@ -19,7 +44,6 @@ export default function StatHexagon({ scores = attributeScores, size = 300 }) {
   const cx = width / 2
   const cy = size / 2
   const radius = size * 0.34 // leave room for labels around the edge
-  const rings = 4
 
   // Vertex angles: start at the top (−90°) and step 60° clockwise.
   const angleFor = (i) => (-90 + i * (360 / attributes.length)) * (Math.PI / 180)
@@ -49,7 +73,7 @@ export default function StatHexagon({ scores = attributeScores, size = 300 }) {
       viewBox={`0 0 ${width} ${size}`}
       role="img"
       aria-label={tr('stats.title')}
-      style={{ display: 'block', maxWidth: '100%' }}
+      style={{ display: 'block', maxWidth: '100%', overflow: 'visible' }}
     >
       {/* Grid rings */}
       {gridRings.map((ring, r) => (
@@ -57,28 +81,27 @@ export default function StatHexagon({ scores = attributeScores, size = 300 }) {
           key={r}
           points={toPoly(ring)}
           fill="none"
-          stroke={t.border}
+          stroke={ringColor(r)}
           strokeWidth={1}
         />
       ))}
 
       {/* Spokes */}
       {outer.map((p, i) => (
-        <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={t.border} strokeWidth={1} />
+        <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke={ringColor(rings - 1)} strokeWidth={1} />
       ))}
 
       {/* Score area */}
       <polygon
         points={toPoly(scorePts)}
-        fill={t.primary}
-        fillOpacity={0.22}
-        stroke={t.primary}
-        strokeWidth={2}
+        fill={fillColor}
+        fillOpacity={fillOpacity}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
         strokeLinejoin="round"
       />
-      {scorePts.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={3} fill={t.primary} />
-      ))}
+      {showDots &&
+        scorePts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={3} fill={strokeColor} />)}
 
       {/* Axis labels */}
       {attributes.map((a, i) => {
@@ -91,10 +114,10 @@ export default function StatHexagon({ scores = attributeScores, size = 300 }) {
             y={p.y}
             textAnchor={anchor}
             dominantBaseline="middle"
-            fontSize={16}
+            fontSize={labelSize}
             fontWeight={700}
-            fill={t.soft}
-            style={{ fontFamily: "'Public Sans', system-ui, sans-serif" }}
+            fill={labelFill}
+            style={{ fontFamily: labelFont }}
           >
             {tr(a.labelKey)}
           </text>
