@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	n := flag.Int("n", 105, "number of exercises to generate (spread uniformly across skill packs)")
+	n := flag.Int("n", 0, "total exercises to generate (0 = 15 per skill pack, spread uniformly)")
 	levels := flag.String("levels", "content/levels/a1.yaml", "path to the level pack YAML")
 	flag.Parse()
 
@@ -27,7 +27,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("load level pack: %v", err)
 	}
-	exs := generate.Generate(pack, *n)
+	total := *n
+	if total <= 0 {
+		total = 15 * len(pack.Teaches)
+	}
+	exs := generate.Generate(pack, total)
 
 	enc := json.NewEncoder(os.Stdout)
 	dist := map[string]int{}

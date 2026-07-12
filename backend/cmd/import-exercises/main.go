@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -69,12 +70,9 @@ func main() {
 		if len(raw) == 0 {
 			continue
 		}
-		var e domain.Exercise
-		if err := json.Unmarshal(raw, &e); err != nil {
-			log.Fatalf("line %d: bad json: %v", line, err)
-		}
-		if e.ID == "" || e.Skill == "" || e.Format == "" || e.Level == "" {
-			log.Fatalf("line %d: missing required field (exerciseId/skill/format/level)", line)
+		e, err := decodeExercise(raw)
+		if err != nil {
+			log.Fatalf("line %d: %v", line, err)
 		}
 		if err := store.Put(ctx, e); err != nil {
 			log.Fatalf("put %s: %v", e.ID, err)
@@ -90,6 +88,21 @@ func main() {
 	for _, sp := range sortedKeys(dist) {
 		log.Printf("  %-16s %d", sp, dist[sp])
 	}
+}
+
+// decodeExercise parses one jsonl line into a domain.Exercise and checks the four
+// required fields. It is format-agnostic: the open content/answer maps mean a
+// template-generated drill, a hand-authored reading item, or an LLM-produced
+// dialogue all decode through this same path — the producer is irrelevant.
+func decodeExercise(raw []byte) (domain.Exercise, error) {
+	var e domain.Exercise
+	if err := json.Unmarshal(raw, &e); err != nil {
+		return e, fmt.Errorf("bad json: %w", err)
+	}
+	if e.ID == "" || e.Skill == "" || e.Format == "" || e.Level == "" {
+		return e, fmt.Errorf("missing required field (exerciseId/skill/format/level)")
+	}
+	return e, nil
 }
 
 // ensureTable creates the Exercises table (PK exerciseId) if absent, then waits

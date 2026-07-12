@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -41,6 +42,8 @@ const (
 	kindConjugation = "conjugation"
 	kindAgreement   = "agreement"
 	kindLookup      = "lookup"
+	kindNumber      = "number"
+	kindAdjective   = "adjective"
 )
 
 // LevelPack is a level's grammar/skill taxonomy + lexicon, loaded from YAML.
@@ -72,8 +75,20 @@ type GrammarPoint struct {
 	KeyByGender map[string]string `yaml:"keyByGender"` // gender -> correct option
 	Nouns       []Noun            `yaml:"nouns"`
 
-	// lookup
-	Rows []Row `yaml:"rows"`
+	// adjective: agree an adjective with each noun's gender.
+	Adjectives []Adjective `yaml:"adjectives"`
+
+	// lookup: each row is a vocab record (e.g. {name, article, prep}); FillerField
+	// names the column that fills the template, KeyField names the correct answer.
+	// This lets one shared vocab list drive several skills (e.g. countries feed both
+	// the article and the preposition exercises).
+	Rows        []map[string]string `yaml:"rows"`
+	FillerField string              `yaml:"fillerField"`
+	KeyField    string              `yaml:"keyField"`
+
+	// number: mint the words for every integer in [Min, Max] and quiz them.
+	Min int `yaml:"min"`
+	Max int `yaml:"max"`
 }
 
 type Person struct {
@@ -92,9 +107,13 @@ type Noun struct {
 	Gender string `yaml:"gender"` // "m" | "f"
 }
 
-type Row struct {
-	Filler string `yaml:"filler"` // fills the template slot (e.g. a country name)
-	Key    string `yaml:"key"`    // the correct option for this row
+// Adjective holds the four agreement forms (some may coincide, e.g. "français").
+type Adjective struct {
+	Lemma string `yaml:"lemma"`
+	M     string `yaml:"m"`
+	F     string `yaml:"f"`
+	Mpl   string `yaml:"mpl"`
+	Fpl   string `yaml:"fpl"`
 }
 
 // LoadPack reads and parses a level pack YAML file.
@@ -144,9 +163,38 @@ func (gp GrammarPoint) build(pack *LevelPack) []domain.Exercise {
 		return gp.buildAgreement(pack)
 	case kindLookup:
 		return gp.buildLookup(pack)
+	case kindNumber:
+		return gp.buildNumber(pack)
+	case kindAdjective:
+		return gp.buildAdjective(pack)
 	default:
 		return nil
 	}
+}
+
+// buildAdjective agrees each adjective with each noun's gender; the key is the
+// singular form for that gender, distractors are the adjective's other forms. The
+// template exposes {article} (le/la, from the noun's gender) and {word}.
+func (gp GrammarPoint) buildAdjective(pack *LevelPack) []domain.Exercise {
+	var out []domain.Exercise
+	for _, adj := range gp.Adjectives {
+		for _, nn := range gp.Nouns {
+			key := adj.M
+			article := "le"
+			if nn.Gender == "f" {
+				key, article = adj.F, "la"
+			}
+			var options []string
+			for _, f := range []string{adj.M, adj.F, adj.Mpl, adj.Fpl} {
+				if f != "" {
+					options = appendUnique(options, f)
+				}
+			}
+			stem := strings.NewReplacer("{article}", article, "{word}", nn.Word).Replace(gp.Template)
+			out = append(out, gp.makeItem(pack, adj.Lemma, stem, options, key))
+		}
+	}
+	return out
 }
 
 func (gp GrammarPoint) buildConjugation(pack *LevelPack) []domain.Exercise {
@@ -195,11 +243,95 @@ func (gp GrammarPoint) buildLookup(pack *LevelPack) []domain.Exercise {
 	// templates outer, rows inner: a capped sample spans the whole row list.
 	for _, tmpl := range gp.Templates {
 		for _, r := range gp.Rows {
-			stem := strings.ReplaceAll(tmpl, "{filler}", r.Filler)
-			out = append(out, gp.makeItem(pack, r.Filler, stem, gp.Options, r.Key))
+			filler, key := r[gp.FillerField], r[gp.KeyField]
+			if filler == "" || key == "" {
+				continue
+			}
+			stem := strings.ReplaceAll(tmpl, "{filler}", filler)
+			out = append(out, gp.makeItem(pack, filler, stem, gp.Options, key))
 		}
 	}
 	return out
+}
+
+// buildNumber mints the French words for every integer in [Min, Max] and asks the
+// learner to pick the correct spelling; distractors are nearby numbers. Items are
+// emitted in a strided order so a capped sample spreads across the whole range.
+func (gp GrammarPoint) buildNumber(pack *LevelPack) []domain.Exercise {
+	lo, hi := gp.Min, gp.Max
+	if lo < 1 {
+		lo = 1
+	}
+	if hi < lo {
+		return nil
+	}
+	const stride = 8
+	var out []domain.Exercise
+	for off := 0; off < stride; off++ {
+		for num := lo + off; num <= hi; num += stride {
+			key := frenchNumber(num)
+			if key == "" {
+				continue
+			}
+			// distractors: nearby numbers, distinct words, in range.
+			options := []string{key}
+			for _, d := range []int{num - 1, num + 1, num + 10, num - 10, num + 2, num - 2} {
+				if len(options) >= 4 {
+					break
+				}
+				if d < lo || d > hi {
+					continue
+				}
+				if w := frenchNumber(d); w != "" && w != key {
+					options = appendUnique(options, w)
+				}
+			}
+			stem := strconv.Itoa(num)
+			out = append(out, gp.makeItem(pack, stem, stem, options, key))
+		}
+	}
+	return out
+}
+
+// numberUnits holds 0..16, from which every French number to 80 is composed.
+var numberUnits = []string{
+	"zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf",
+	"dix", "onze", "douze", "treize", "quatorze", "quinze", "seize",
+}
+
+// frenchNumber spells an integer in [0, 80] in French, "" if out of range. Handles
+// the "et un" cases (21, 31…61, 71) and the vigesimal 70s/80 (soixante-dix, quatre-vingts).
+func frenchNumber(n int) string {
+	switch {
+	case n < 0 || n > 80:
+		return ""
+	case n <= 16:
+		return numberUnits[n]
+	case n <= 19: // 17..19 = dix-sept…dix-neuf
+		return "dix-" + numberUnits[n-10]
+	case n <= 69:
+		tens := map[int]string{2: "vingt", 3: "trente", 4: "quarante", 5: "cinquante", 6: "soixante"}[n/10]
+		switch u := n % 10; {
+		case u == 0:
+			return tens
+		case u == 1:
+			return tens + " et un"
+		default:
+			return tens + "-" + numberUnits[u]
+		}
+	case n <= 79: // 70..79 = soixante + 10..19
+		r := n - 60
+		switch {
+		case r == 11:
+			return "soixante et onze"
+		case r <= 16:
+			return "soixante-" + numberUnits[r]
+		default:
+			return "soixante-dix-" + numberUnits[r-10]
+		}
+	default: // 80
+		return "quatre-vingts"
+	}
 }
 
 // makeItem assembles a multiple_choice item. Options are sorted so the key's

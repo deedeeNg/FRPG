@@ -108,6 +108,24 @@ func TestGenerateCoversEveryVerb(t *testing.T) {
 	}
 }
 
+func TestFrenchNumber(t *testing.T) {
+	cases := map[int]string{
+		1: "un", 7: "sept", 16: "seize", 17: "dix-sept", 20: "vingt",
+		21: "vingt et un", 22: "vingt-deux", 31: "trente et un", 42: "quarante-deux",
+		60: "soixante", 61: "soixante et un", 69: "soixante-neuf", 70: "soixante-dix",
+		71: "soixante et onze", 72: "soixante-douze", 76: "soixante-seize",
+		77: "soixante-dix-sept", 79: "soixante-dix-neuf", 80: "quatre-vingts",
+	}
+	for n, want := range cases {
+		if got := frenchNumber(n); got != want {
+			t.Errorf("frenchNumber(%d) = %q, want %q", n, got, want)
+		}
+	}
+	if frenchNumber(81) != "" || frenchNumber(0) != "zéro" {
+		t.Errorf("range guard wrong: 81=%q 0=%q", frenchNumber(81), frenchNumber(0))
+	}
+}
+
 func TestGenerateIsDeterministic(t *testing.T) {
 	a := Generate(loadPack(t), 51)
 	b := Generate(loadPack(t), 51)
