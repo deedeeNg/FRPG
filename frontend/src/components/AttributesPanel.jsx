@@ -1,6 +1,6 @@
 import { useLanguage } from '../i18n'
 import StatHexagon from './StatHexagon'
-import { hudColors, pxCorners, liquidGlass } from '../hud'
+import { hudColors, roundCorners, liquidGlass } from '../hud'
 
 // Grid-ring alpha steps from the design: inner → outer.
 const ringAlpha = [0.2, 0.25, 0.35]
@@ -19,7 +19,7 @@ export default function AttributesPanel({ scores }) {
     <div
       style={{
         ...liquidGlass,
-        ...pxCorners,
+        ...roundCorners,
         width: 'min(400px, 100%)',
         boxSizing: 'border-box',
         display: 'flex',

@@ -13,10 +13,9 @@ export const hudColors = {
   rose: '#e85d75', // Writing
 }
 
-// 8px pixel-step notch cut out of each corner (no border-radius anywhere).
-export const pxCorners = {
-  clipPath:
-    'polygon(0 8px, 8px 8px, 8px 0, calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px))',
+// Rounded card corners.
+export const roundCorners = {
+  borderRadius: 16,
 }
 
 // Dark translucent panel with backdrop blur, hairline border, inset highlight.
@@ -42,3 +41,6 @@ export const liquidGlassHover = 'rgba(28,22,52,0.42)'
 
 // Pixel art must never smooth-scale.
 export const pixelated = { imageRendering: 'pixelated' }
+
+// Keeps white text legible over the frosty, low-tint liquid glass.
+export const glassTextShadow = '0 2px 0 rgba(43,36,64,0.55)'

@@ -1,8 +1,8 @@
 import HudBar from './HudBar'
+import Background from './Background'
 import { pixelated } from '../hud'
 import { userProfile } from '../data/user'
 import { useWindowWidth, HUD_BREAKPOINT } from '../hooks/useWindowWidth'
-import bgDay from '../assets/hud/bg-day.png'
 
 /**
  * Full-bleed HUD shell: the pixel-art landscape background with the top HUD bar.
@@ -24,14 +24,11 @@ export default function HudLayout({ activeRoute, onNavigate, onLogout, showXpBar
         minHeight: '100vh',
         overflowX: 'hidden',
         overflowY: 'auto',
-        backgroundImage: `url(${bgDay})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed', // landscape stays put while content scrolls
         fontFamily: "'Pixelify Sans', sans-serif",
         ...pixelated,
       }}
     >
+      <Background />
       <div
         style={
           compact

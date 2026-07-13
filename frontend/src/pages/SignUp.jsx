@@ -6,6 +6,7 @@ import TextField from '../components/TextField'
 import SocialButton from '../components/SocialButton'
 import { providers } from '../data/providers'
 import { useHover } from '../hooks/useHover'
+import { liquidGlass, roundCorners, hudColors, glassTextShadow } from '../hud'
 
 /**
  * Sign-up screen. Mirrors Login; behavior injected via props:
@@ -82,23 +83,22 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
     padding: 0,
     cursor: 'pointer',
     fontFamily: 'inherit',
-    color: t.primary,
+    color: hudColors.gold,
     fontWeight: 600,
+    textShadow: glassTextShadow,
   }
 
   return (
     <form onSubmit={submit} style={{ width: '100%', maxWidth: 412 }}>
       <div
         style={{
-          background: t.surface,
-          border: `1px solid ${t.border}`,
-          borderRadius: 24,
-          boxShadow: t.cardShadow,
+          ...liquidGlass,
+          ...roundCorners,
           padding: 'clamp(26px, 5.5vw, 40px)',
         }}
       >
         <div style={{ marginBottom: 26 }}>
-          <BrandMark showTagline />
+          <BrandMark showTagline nameColor="#ffffff" taglineColor="rgba(255,255,255,0.85)" textShadow={glassTextShadow} />
         </div>
 
         <h1
@@ -108,12 +108,13 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
             fontSize: 26,
             margin: '0 0 4px',
             letterSpacing: '-.01em',
-            color: t.ink,
+            color: '#ffffff',
+            textShadow: glassTextShadow,
           }}
         >
           {tr('auth.create')}
         </h1>
-        <p style={{ margin: '0 0 24px', fontSize: 14, color: t.soft }}>{tr('auth.create.sub')}</p>
+        <p style={{ margin: '0 0 24px', fontSize: 14, color: 'rgba(255,255,255,0.85)', textShadow: glassTextShadow }}>{tr('auth.create.sub')}</p>
 
         <TextField
           label={tr('field.email')}
@@ -123,6 +124,8 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          labelColor="#ffffff"
+          labelShadow={glassTextShadow}
         />
         <TextField
           label={tr('field.password')}
@@ -132,6 +135,8 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          labelColor="#ffffff"
+          labelShadow={glassTextShadow}
         />
         <TextField
           label={tr('field.confirmPassword')}
@@ -142,6 +147,8 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
           gap={22}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
+          labelColor="#ffffff"
+          labelShadow={glassTextShadow}
         />
 
         {error && (
@@ -163,9 +170,9 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
         {showSocial && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
-              <span style={{ flex: 1, height: 1, background: t.divider }} />
-              <span style={{ fontSize: 11.5, color: t.faint, letterSpacing: '.04em' }}>{tr('auth.orSignup')}</span>
-              <span style={{ flex: 1, height: 1, background: t.divider }} />
+              <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.25)' }} />
+              <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.75)', letterSpacing: '.04em', textShadow: glassTextShadow }}>{tr('auth.orSignup')}</span>
+              <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.25)' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {providers.map((p) => (
@@ -183,7 +190,7 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
         )}
       </div>
 
-      <p style={{ textAlign: 'center', fontSize: 13.5, color: t.soft, margin: '22px 0 0' }}>
+      <p style={{ textAlign: 'center', fontSize: 13.5, color: 'rgba(255,255,255,0.9)', textShadow: glassTextShadow, margin: '22px 0 0' }}>
         {tr('auth.haveAccount')}{' '}
         <button type="button" onClick={onLogin} style={{ ...linkBtn, fontWeight: 700, fontSize: 13.5 }}>
           {tr('auth.login')}

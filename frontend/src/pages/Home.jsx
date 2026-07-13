@@ -47,6 +47,16 @@ export default function Home({
   const { t: tr } = useLanguage()
   const compact = useWindowWidth() < HUD_BREAKPOINT
 
+  // Hard dark pixel-outline (8-directional) so the white title/subtitle stay
+  // legible on any day-cycle phase — including the light day sky where a plain
+  // drop shadow washed out. `w` is the outline thickness; the last layer keeps a
+  // soft drop shadow for depth.
+  const ink = hudColors.ink
+  const outline = (w) =>
+    `${ink} ${w}px 0 0, ${ink} -${w}px 0 0, ${ink} 0 ${w}px 0, ${ink} 0 -${w}px 0,` +
+    `${ink} ${w}px ${w}px 0, ${ink} -${w}px ${w}px 0, ${ink} ${w}px -${w}px 0, ${ink} -${w}px -${w}px 0,` +
+    `0 ${w + 2}px 0 rgba(43,36,64,0.35)`
+
   // Shared content pieces — styled fluidly, then positioned per layout below.
   const heading = (
     <div style={compact ? { textAlign: 'center', maxWidth: 640, margin: '0 auto' } : undefined}>
@@ -58,7 +68,7 @@ export default function Home({
           color: '#ffffff',
           margin: 0,
           lineHeight: 1,
-          textShadow: '0 4px 0 rgba(43,36,64,0.55)',
+          textShadow: outline(3),
         }}
       >
         {tr('landing.title')}
@@ -68,7 +78,7 @@ export default function Home({
           fontSize: compact ? 'clamp(15px, 3.5vw, 22px)' : 22,
           color: '#ffffff',
           margin: compact ? '14px auto 0' : '18px 0 0',
-          textShadow: '0 2px 0 rgba(43,36,64,0.55)',
+          textShadow: outline(2),
           maxWidth: 520,
         }}
       >

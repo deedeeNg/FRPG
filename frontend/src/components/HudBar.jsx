@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLanguage } from '../i18n'
-import { hudColors, pxCorners, liquidGlass, pixelated } from '../hud'
+import { hudColors, roundCorners, liquidGlass, pixelated } from '../hud'
 
 // Keep white HUD text legible over the frosty, low-tint glass.
 const textShadow = '0 2px 0 rgba(43,36,64,0.55)'
@@ -53,7 +53,7 @@ export default function HudBar({ user, activeRoute, onNavigate, onLogout, showXp
     <div
       style={{
         ...liquidGlass,
-        ...pxCorners,
+        ...roundCorners,
         minHeight: 76,
         display: 'flex',
         alignItems: 'center',

@@ -5,8 +5,9 @@ import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Home from './pages/Home'
 import HudLayout from './components/HudLayout'
-import ThemeToggle from './components/ThemeToggle'
+import Background from './components/Background'
 import ConfirmDialog from './components/ConfirmDialog'
+import { glassTextShadow } from './hud'
 import { login, signup, fetchMe } from './api/auth'
 import { getGoogleToken } from './api/google'
 import { getFacebookToken } from './api/facebook'
@@ -113,25 +114,43 @@ function Screen() {
 
   return (
     <div
+      className="authScroll"
       style={{
         position: 'relative',
-        minHeight: '100vh',
+        height: '100vh',
         width: '100%',
-        background: t.page,
+        // Scroll only if a card is taller than the viewport; the bar is hidden
+        // (see .authScroll rule) so short screens still read as scrollbar-free.
+        overflowY: 'auto',
+        overflowX: 'hidden',
         fontFamily: "'Public Sans', system-ui, sans-serif",
         color: t.ink,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '20px 16px 48px',
-        transition: 'background .2s, color .2s',
+        transition: 'color .2s',
       }}
     >
-      <ThemeToggle />
+      {/* Hide the scrollbar while keeping the element scrollable. */}
+      <style>{`.authScroll{scrollbar-width:none;-ms-overflow-style:none}.authScroll::-webkit-scrollbar{width:0;height:0}`}</style>
+      <Background />
 
+      {/* Flex-center inside the scroll container: short content centers, tall
+          content stays fully reachable (no top clipping like plain centering). */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          minHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px 16px',
+        }}
+      >
       {ready && (
         <div
           style={{
+            position: 'relative',
+            zIndex: 1,
             display: 'inline-flex',
             gap: 4,
             padding: 4,
@@ -149,9 +168,9 @@ function Screen() {
         </div>
       )}
 
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', margin: 'auto 0' }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {!ready ? (
-          <p style={{ fontSize: 14, color: t.soft }}>{tr('common.loading')}</p>
+          <p style={{ fontSize: 14, color: '#ffffff', textShadow: glassTextShadow }}>{tr('common.loading')}</p>
         ) : screen === 'signup' ? (
           <SignUp
             onSubmit={async ({ email, password }) => {
@@ -177,6 +196,7 @@ function Screen() {
             onSignup={() => setScreen('signup')}
           />
         )}
+      </div>
       </div>
     </div>
   )
