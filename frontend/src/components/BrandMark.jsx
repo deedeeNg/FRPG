@@ -5,6 +5,10 @@ export default function BrandMark({
   name = 'FRPG',
   tagline,
   showTagline = false,
+  // Override text colors (e.g. when placed on a dark "liquid glass" surface).
+  nameColor,
+  taglineColor,
+  textShadow,
 }) {
   const { theme: t } = useTheme()
   const { t: tr } = useLanguage()
@@ -33,13 +37,14 @@ export default function BrandMark({
             fontWeight: 800,
             fontSize: 19,
             letterSpacing: '.14em',
-            color: t.ink,
+            color: nameColor ?? t.ink,
+            textShadow,
           }}
         >
           {name}
         </span>
         {showTagline && (
-          <span style={{ fontSize: 11.5, color: t.mute, letterSpacing: '.02em', marginTop: 4 }}>{taglineText}</span>
+          <span style={{ fontSize: 11.5, color: taglineColor ?? t.mute, letterSpacing: '.02em', marginTop: 4, textShadow }}>{taglineText}</span>
         )}
       </div>
     </div>

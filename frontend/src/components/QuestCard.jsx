@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLanguage } from '../i18n'
-import { hudColors, pxCorners, liquidGlass, liquidGlassHover, pixelated } from '../hud'
+import { hudColors, roundCorners, liquidGlass, liquidGlassHover, pixelated } from '../hud'
 
 // Keep the white text legible over the frosty, low-tint glass.
 const textShadow = '0 2px 0 rgba(43,36,64,0.55)'
@@ -26,7 +26,7 @@ export default function QuestCard({ quest, onClick }) {
       onMouseLeave={() => setHover(false)}
       style={{
         ...liquidGlass,
-        ...pxCorners,
+        ...roundCorners,
         background: hover ? liquidGlassHover : liquidGlass.background,
         padding: '8px 20px',
         display: 'flex',

@@ -10,6 +10,9 @@ export default function TextField({
   value,
   onChange,
   gap = 16,
+  // Override the label styling (e.g. white text on a dark "liquid glass" card).
+  labelColor,
+  labelShadow,
 }) {
   const { theme: t } = useTheme()
   const [focused, setFocused] = useState(false)
@@ -30,7 +33,7 @@ export default function TextField({
 
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: gap }}>
-      <span style={{ fontSize: 12.5, fontWeight: 600, color: t.labelColor, letterSpacing: '.01em' }}>{label}</span>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: labelColor ?? t.labelColor, letterSpacing: '.01em', textShadow: labelShadow }}>{label}</span>
       <input
         type={type}
         name={name}
