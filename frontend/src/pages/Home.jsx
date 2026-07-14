@@ -3,7 +3,7 @@ import HudLayout from '../components/HudLayout'
 import QuestCard from '../components/QuestCard'
 import AttributesPanel from '../components/AttributesPanel'
 import { hudColors, pixelated } from '../hud'
-import { useWindowWidth, HUD_BREAKPOINT } from '../hooks/useWindowWidth'
+import { useWindowWidth, HUD_BREAKPOINT, CARD_COLLAPSE_BREAKPOINT } from '../hooks/useWindowWidth'
 import { attributeScores } from '../data/stats'
 import { skills } from '../data/skills'
 import knight from '../assets/hud/knight.png'
@@ -45,7 +45,11 @@ export default function Home({
   showXpBar = true,
 }) {
   const { t: tr } = useLanguage()
-  const compact = useWindowWidth() < HUD_BREAKPOINT
+  const width = useWindowWidth()
+  const compact = width < HUD_BREAKPOINT
+  // On small screens the quest cards start collapsed (icon + title) and expand
+  // on tap; a tighter grid minimum lets them sit two-up on phones.
+  const collapseCards = width < CARD_COLLAPSE_BREAKPOINT
 
   // Hard dark pixel-outline (8-directional) so the white title/subtitle stay
   // legible on any day-cycle phase — including the light day sky where a plain
@@ -110,12 +114,12 @@ export default function Home({
         width: '100%',
         display: 'grid',
         // 4-up on wide screens; wraps to 2-up / 1-up as width shrinks.
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: `repeat(auto-fit, minmax(${collapseCards ? 140 : 200}px, 1fr))`,
         gap: 16,
       }}
     >
       {QUESTS.map((quest) => (
-        <QuestCard key={quest.key} quest={quest} onClick={onSelectQuest} />
+        <QuestCard key={quest.key} quest={quest} onClick={onSelectQuest} collapsible={collapseCards} />
       ))}
     </div>
   )
@@ -126,7 +130,9 @@ export default function Home({
   if (compact) {
     return (
       <HudLayout {...hudProps}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, padding: '8px 20px 28px' }}>
+        {/* relative + zIndex lifts the static column above the fixed Background
+            (z-index 0), which otherwise paints over plain text like the heading. */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, padding: '8px 20px 28px' }}>
           {heading}
           {knightEl}
           <div style={{ width: '100%', maxWidth: 400 }}>{radar}</div>
