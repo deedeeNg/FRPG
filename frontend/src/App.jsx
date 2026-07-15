@@ -4,6 +4,7 @@ import { LanguageProvider, useLanguage } from './i18n'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Home from './pages/Home'
+import Map from './pages/Map'
 import HudLayout from './components/HudLayout'
 import Background from './components/Background'
 import ConfirmDialog from './components/ConfirmDialog'
@@ -91,8 +92,8 @@ function Screen() {
   )
 
   // Signed in: everything lives on the full-bleed pixel-art HUD. Home renders
-  // the quest content; the other nav routes (Map / Learning / Settings) are
-  // empty placeholder pages on the same landscape for now.
+  // the quest content, Map renders the adventure map; Learning / Settings are
+  // still empty placeholder pages on the same landscape for now.
   if (ready && session) {
     const onLogout = () => setConfirmLogout(true)
     return (
@@ -104,6 +105,8 @@ function Screen() {
             onLogout={onLogout}
             onSelectQuest={() => setScreen('learning')}
           />
+        ) : screen === 'map' ? (
+          <Map activeRoute="map" onNavigate={setScreen} onLogout={onLogout} />
         ) : (
           <HudLayout activeRoute={screen} onNavigate={setScreen} onLogout={onLogout} />
         )}

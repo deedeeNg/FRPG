@@ -93,6 +93,10 @@ const strings = {
     'nav.platform': 'Platform',
     'nav.mainMenu': 'Main menu',
 
+    // Adventure map
+    'map.return': 'Return',
+    'map.legend.title': 'Legend',
+
     // Profile
     'profile.title': 'Profile',
     'profile.logout': 'Log out',
@@ -189,6 +193,10 @@ const strings = {
     'nav.logout': 'Đăng xuất',
     'nav.platform': 'Nền tảng',
     'nav.mainMenu': 'Menu chính',
+
+    // Adventure map
+    'map.return': 'Trở về',
+    'map.legend.title': 'Chú giải',
 
     // Profile
     'profile.title': 'Hồ sơ',
