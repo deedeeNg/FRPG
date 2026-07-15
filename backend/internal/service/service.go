@@ -24,7 +24,7 @@ import (
 
 // NewServer builds a fully wired HTTP server from the environment.
 func NewServer(ctx context.Context) *ports.Server {
-	repo := buildRepo(ctx)
+	repo, exercises := buildStores(ctx)
 	sessions := jwt.NewManager(envOr("SESSION_SECRET", devSecret()), 24*time.Hour)
 
 	// Facebook's app-audience check needs an app access token ("{app-id}|{secret}").
@@ -42,19 +42,21 @@ func NewServer(ctx context.Context) *ports.Server {
 	)
 
 	return &ports.Server{
-		Identity: identity,
-		Signup:   app.NewLocalSignUp(repo),
-		Sessions: sessions,
+		Identity:  identity,
+		Signup:    app.NewLocalSignUp(repo),
+		Sessions:  sessions,
+		Exercises: app.NewExercises(exercises),
 	}
 }
 
-// buildRepo returns a DynamoDB-backed repository when AWS/DynamoDB is configured,
-// and an in-memory seeded repository otherwise so the server runs offline in dev.
-func buildRepo(ctx context.Context) domain.Repository {
+// buildStores returns the user repository and exercise store. When AWS/DynamoDB is
+// configured they share one DynamoDB client; otherwise both fall back to in-memory
+// so the server runs offline in dev (the exercise store is empty until seeded).
+func buildStores(ctx context.Context) (domain.Repository, domain.ExerciseStore) {
 	endpoint := os.Getenv("DYNAMODB_ENDPOINT")
 	if endpoint == "" && os.Getenv("AWS_REGION") == "" {
-		log.Println("no DynamoDB configured; using in-memory seeded repo (dev only)")
-		return inmem.NewSeeded()
+		log.Println("no DynamoDB configured; using in-memory repos (dev only)")
+		return inmem.NewSeeded(), inmem.NewExerciseStore()
 	}
 
 	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(envOr("AWS_REGION", "local")))
@@ -66,7 +68,8 @@ func buildRepo(ctx context.Context) domain.Repository {
 			o.BaseEndpoint = aws.String(endpoint)
 		}
 	})
-	return dynamo.New(client, envOr("USERS_TABLE", "Users"))
+	return dynamo.New(client, envOr("USERS_TABLE", "Users")),
+		dynamo.NewExerciseStore(client, envOr("EXERCISES_TABLE", "Exercises"))
 }
 
 func devSecret() string {

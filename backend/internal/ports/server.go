@@ -13,9 +13,10 @@ import (
 // production and by fakes in tests. Identity is the provider registry, so a
 // single route handles local/google/facebook.
 type Server struct {
-	Identity *app.Manager
-	Signup   app.LocalSignUp
-	Sessions domain.SessionManager
+	Identity  *app.Manager
+	Signup    app.LocalSignUp
+	Sessions  domain.SessionManager
+	Exercises *app.Exercises
 }
 
 // Routes builds the request router (Go 1.22 method+pattern routing). One
@@ -27,6 +28,8 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /auth/{provider}", s.handleAuth)
 	mux.HandleFunc("POST /signup", s.handleSignUp)
 	mux.Handle("GET /api/me", s.RequireAuth(http.HandlerFunc(s.handleMe)))
+	mux.Handle("GET /api/exercise", s.RequireAuth(http.HandlerFunc(s.handleNextExercise)))
+	mux.Handle("POST /api/exercise/grade", s.RequireAuth(http.HandlerFunc(s.handleGradeExercise)))
 
 	return mux
 }

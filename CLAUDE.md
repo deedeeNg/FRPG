@@ -9,6 +9,11 @@ French learning app, RPG style. `frontend/` (React + Vite) and `backend/` (Go).
   or update other docs/considerations unless they were part of the request.
 - **If you spot worthwhile extra work, mention it and ask first** — propose it as a
   follow-up; don't just do it. A smaller, in-scope change beats a larger unrequested one.
+- **When it touches a data model, go deep and always show a concrete example.** Don't
+  leave a field at a surface-level description: say *why the field exists*, what breaks
+  without it, and which values are valid. Always include a realistic example record
+  (e.g. a sample DynamoDB item as JSON, or a filled-in struct), and make clear whether
+  a nested type is a **separate table** or a **value object stored inline**.
 
 ## Backend conventions
 

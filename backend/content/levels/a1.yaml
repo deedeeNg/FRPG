@@ -1,0 +1,288 @@
+# A1 level pack — the source of truth for what A1 teaches and the curated lexicon
+# that feeds generation. The Go generator (and
+# later the Python pipeline) READ this instead of hardcoding.
+#
+# Each `teaches` entry is a grammar point (skill contrast). `kind` selects the
+# generation procedure; distractors come from the data here (no LLM), so every item
+# is correct by construction:
+#   conjugation — blank a verb; distractors = other persons of the same lemma.
+#   agreement   — blank an agreeing word; key from keyByGender; distractors = options.
+#   lookup      — blank a slot with a fixed answer per row; distractors = options.
+#
+# NOTE: lives under backend/ for now so the Go tool, tests, and docker-compose all
+# find it with a simple path. Hoist to a top-level content/ when Python shares it.
+
+code: A1
+skill: reading            # delivery modality for v0
+format: multiple_choice   # answer shape for v0
+
+# ── A1 VOCABULARY (source of truth) ──────────────────────────────────────────
+# Themes taken from "Exercices de vocabulaire en contexte" (débutant) + Édito A1.
+# This file is the A1 pack, so every word listed here is A1. The skills below
+# reference these lists via YAML anchors, so the vocabulary and the generated items
+# cannot drift. Level rule: a word is A1 iff it appears in an A1 pack's vocab; the
+# future A2 pack declares its own vocab plus `assumes: [A1]`, and a word is A2 iff
+# it first appears there.
+vocab:
+  # Everyday nouns with gender, grouped by A1 theme. Kept consonant-initial so the
+  # definite article stays le/la (never l') and ce/mon need no elision — vowel-
+  # initial A1 words (ami, école, orange…) wait for an elision-aware builder.
+  nouns: &nouns
+    # famille / personnes
+    - { word: père,      gender: m }
+    - { word: mère,      gender: f }
+    - { word: frère,     gender: m }
+    - { word: sœur,      gender: f }
+    - { word: fille,     gender: f }
+    - { word: garçon,    gender: m }
+    # le corps
+    - { word: tête,      gender: f }
+    - { word: main,      gender: f }
+    - { word: pied,      gender: m }
+    - { word: bras,      gender: m }
+    - { word: jambe,     gender: f }
+    # vêtements
+    - { word: chemise,   gender: f }
+    - { word: robe,      gender: f }
+    - { word: pantalon,  gender: m }
+    - { word: manteau,   gender: m }
+    - { word: veste,     gender: f }
+    # nourriture
+    - { word: pain,      gender: m }
+    - { word: pomme,     gender: f }
+    - { word: café,      gender: m }
+    - { word: gâteau,    gender: m }
+    - { word: fromage,   gender: m }
+    - { word: poisson,   gender: m }
+    # maison / objets
+    - { word: maison,    gender: f }
+    - { word: livre,     gender: m }
+    - { word: table,     gender: f }
+    - { word: chaise,    gender: f }
+    - { word: porte,     gender: f }
+    - { word: voiture,   gender: f }
+    - { word: sac,       gender: m }
+    - { word: téléphone, gender: m }
+    # animaux / ville
+    - { word: chat,      gender: m }
+    - { word: chien,     gender: m }
+    - { word: rue,       gender: f }
+    - { word: gare,      gender: f }
+    - { word: parc,      gender: m }
+
+  # Countries: definite article (le/la/les/l') + preposition (en/au/aux). Feeds
+  # both the country-article and preposition skills.
+  countries: &countries
+    - { name: France,        article: la,   prep: en }
+    - { name: Japon,         article: le,   prep: au }
+    - { name: Canada,        article: le,   prep: au }
+    - { name: Espagne,       article: "l'", prep: en }
+    - { name: Portugal,      article: le,   prep: au }
+    - { name: "États-Unis",  article: les,  prep: aux }
+    - { name: Italie,        article: "l'", prep: en }
+    - { name: Maroc,         article: le,   prep: au }
+    - { name: Allemagne,     article: "l'", prep: en }
+    - { name: Chine,         article: la,   prep: en }
+    - { name: Brésil,        article: le,   prep: au }
+    - { name: Belgique,      article: la,   prep: en }
+    - { name: Suisse,        article: la,   prep: en }
+    - { name: Sénégal,       article: le,   prep: au }
+    - { name: Mexique,       article: le,   prep: au }
+
+  # Objects & animals (gender), for the adjective-agreement skill — kept to things
+  # (not people) so size/colour adjectives read naturally.
+  things: &things
+    - { word: maison,   gender: f }
+    - { word: livre,    gender: m }
+    - { word: table,    gender: f }
+    - { word: chaise,   gender: f }
+    - { word: voiture,  gender: f }
+    - { word: sac,      gender: m }
+    - { word: chat,     gender: m }
+    - { word: chien,    gender: m }
+    - { word: pantalon, gender: m }
+    - { word: robe,     gender: f }
+    - { word: chemise,  gender: f }
+    - { word: gâteau,   gender: m }
+
+  # Mass foods (gender), for the partitive skill. Consonant-initial so the article
+  # stays du/de la (never de l').
+  foods: &foods
+    - { word: pain,      gender: m }
+    - { word: fromage,   gender: m }
+    - { word: café,      gender: m }
+    - { word: poisson,   gender: m }
+    - { word: riz,       gender: m }
+    - { word: viande,    gender: f }
+    - { word: soupe,     gender: f }
+    - { word: salade,    gender: f }
+    - { word: confiture, gender: f }
+    - { word: limonade,  gender: f }
+
+  # Themes carried as A1 inventory (not yet quizzed by a skill — here so the A1/A2
+  # boundary is explicit; wire into a skill when a builder needs them).
+  numbers: { range: "1-80", generated_by: numbers_1_80 }
+  jours: [lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche]
+  mois:  [janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]
+
+teaches:
+  # ── Conjugation: present tense, -er/-ir/irregular verbs (unités 1–6) ─────────
+  # forms indexed je,tu,il,nous,vous,ils (0..5). persons start at index 1 ("je" is
+  # skipped to avoid stem elision "j'aime" leaking the answer's first letter).
+  # complements are chosen to read naturally across every subject (no agreement trap).
+  - id: present_verbs
+    kind: conjugation
+    skillPoint: conjugation
+    feature: person
+    instructions: "Choisissez la bonne forme du verbe."
+    promptVersion: tmpl-present-v1
+    template: "{subject} ___ {complement}."
+    persons:
+      - { subject: Tu, index: 1 }
+      - { subject: Il, index: 2 }
+      - { subject: Nous, index: 3 }
+      - { subject: Vous, index: 4 }
+      - { subject: Ils, index: 5 }
+    verbs:
+      - { lemma: parler,     complement: "français",       forms: [parle, parles, parle, parlons, parlez, parlent] }
+      - { lemma: aimer,      complement: "la musique",     forms: [aime, aimes, aime, aimons, aimez, aiment] }
+      - { lemma: habiter,    complement: "ici",            forms: [habite, habites, habite, habitons, habitez, habitent] }
+      - { lemma: travailler, complement: "beaucoup",       forms: [travaille, travailles, travaille, travaillons, travaillez, travaillent] }
+      - { lemma: regarder,   complement: "la télévision",  forms: [regarde, regardes, regarde, regardons, regardez, regardent] }
+      - { lemma: écouter,    complement: "la radio",       forms: [écoute, écoutes, écoute, écoutons, écoutez, écoutent] }
+      - { lemma: choisir,    complement: "un livre",       forms: [choisis, choisis, choisit, choisissons, choisissez, choisissent] }
+      - { lemma: finir,      complement: "le travail",     forms: [finis, finis, finit, finissons, finissez, finissent] }
+      - { lemma: être,       complement: "à Paris",        forms: [suis, es, est, sommes, êtes, sont] }
+      - { lemma: avoir,      complement: "un chat",        forms: [ai, as, a, avons, avez, ont] }
+      - { lemma: aller,      complement: "à l'école",      forms: [vais, vas, va, allons, allez, vont] }
+      - { lemma: faire,      complement: "du sport",       forms: [fais, fais, fait, faisons, faites, font] }
+      - { lemma: prendre,    complement: "le bus",         forms: [prends, prends, prend, prenons, prenez, prennent] }
+
+  # ── Definite article (le/la/les) — gender (unité 1) ─────────────────────────
+  - id: article_definite
+    kind: agreement
+    skillPoint: article_gender
+    feature: gender
+    instructions: "Choisissez le bon article."
+    promptVersion: tmpl-article-definite-v1
+    templates: ["Voici ___ {word}.", "Je vois ___ {word}.", "C'est ___ {word}."]
+    options: [le, la, les]
+    keyByGender: { m: le, f: la }
+    nouns: *nouns
+
+  # ── Indefinite article (un/une/des) — gender (unité 2) ──────────────────────
+  - id: article_indefinite
+    kind: agreement
+    skillPoint: article_indefinite
+    feature: gender
+    instructions: "Choisissez le bon article indéfini."
+    promptVersion: tmpl-article-indefinite-v1
+    templates: ["Voici ___ {word}.", "C'est ___ {word}.", "J'ai ___ {word}."]
+    options: [un, une, des]
+    keyByGender: { m: un, f: une }
+    nouns: *nouns
+
+  # ── Demonstrative adjective (ce/cette/ces) — gender (unité 5) ────────────────
+  - id: demonstrative
+    kind: agreement
+    skillPoint: demonstrative
+    feature: gender
+    instructions: "Choisissez le bon adjectif démonstratif."
+    promptVersion: tmpl-demonstrative-v1
+    templates: ["Regarde ___ {word}.", "J'aime ___ {word}."]
+    options: [ce, cette, ces]
+    keyByGender: { m: ce, f: cette }
+    nouns: *nouns
+
+  # ── Possessive adjective (mon/ma/mes) — gender (unité 2) ────────────────────
+  - id: possessive
+    kind: agreement
+    skillPoint: possessive
+    feature: gender
+    instructions: "Choisissez le bon adjectif possessif."
+    promptVersion: tmpl-possessive-v1
+    templates: ["C'est ___ {word}.", "Voici ___ {word}."]
+    options: [mon, ma, mes]
+    keyByGender: { m: mon, f: ma }
+    nouns: *nouns
+
+  # ── Interrogative adjective (quel/quelle) — gender (unité 1) ─────────────────
+  - id: interrogative_quel
+    kind: agreement
+    skillPoint: interrogative
+    feature: gender
+    instructions: "Choisissez la bonne forme de « quel »."
+    promptVersion: tmpl-quel-v1
+    templates: ["___ {word} préfères-tu ?", "___ {word} choisis-tu ?"]
+    options: [quel, quelle, quels, quelles]
+    keyByGender: { m: quel, f: quelle }
+    nouns: *nouns
+
+  # ── Definite article before a country (le/la/les/l') — gender (unités 1, 9) ──
+  # Countries carry gender + elision + number, so the answer is a fixed lookup per
+  # country (not a simple gender map). Template avoids a verb so les États-Unis
+  # needs no plural agreement.
+  - id: country_article
+    kind: lookup
+    skillPoint: country_gender
+    feature: article
+    instructions: "Choisissez le bon article."
+    promptVersion: tmpl-country-article-v1
+    templates: ["J'aime ___ {filler}.", "Je connais ___ {filler}.", "Je visite ___ {filler}."]
+    options: [le, la, les, "l'"]
+    fillerField: name
+    keyField: article
+    rows: *countries
+
+  # ── Preposition before country names (en/au/aux) — (unités 1, 9) ────────────
+  - id: prep_pays
+    kind: lookup
+    skillPoint: preposition
+    feature: preposition
+    instructions: "Choisissez la bonne préposition."
+    promptVersion: tmpl-prep-pays-v1
+    templates: ["Je vais ___ {filler}.", "Nous allons ___ {filler}.", "Il habite ___ {filler}."]
+    options: [en, au, aux]
+    fillerField: name
+    keyField: prep
+    rows: *countries
+
+  # ── Partitive article (du/de la) — gender (Exercices de grammaire, ch. 11) ───
+  - id: partitif
+    kind: agreement
+    skillPoint: partitive
+    feature: gender
+    instructions: "Choisissez le bon article partitif."
+    promptVersion: tmpl-partitif-v1
+    templates: ["Je mange ___ {word}.", "Je voudrais ___ {word}.", "Il y a ___ {word}."]
+    options: [du, "de la", "de l'", des]
+    keyByGender: { m: du, f: "de la" }
+    nouns: *foods
+
+  # ── Adjective agreement (m/f/pl) — (Exercices de grammaire, ch. 9) ──────────
+  - id: adjective_agreement
+    kind: adjective
+    skillPoint: adjective_agreement
+    feature: gender
+    instructions: "Accordez l'adjectif avec le nom."
+    promptVersion: tmpl-adj-agreement-v1
+    template: "{article} {word} est ___."
+    nouns: *things
+    adjectives:
+      - { lemma: petit, m: petit, f: petite, mpl: petits, fpl: petites }
+      - { lemma: grand, m: grand, f: grande, mpl: grands, fpl: grandes }
+      - { lemma: joli,  m: joli,  f: jolie,  mpl: jolis,  fpl: jolies }
+      - { lemma: vert,  m: vert,  f: verte,  mpl: verts,  fpl: vertes }
+      - { lemma: noir,  m: noir,  f: noire,  mpl: noirs,  fpl: noires }
+      - { lemma: bleu,  m: bleu,  f: bleue,  mpl: bleus,  fpl: bleues }
+
+  # ── Numbers 1–80: pick the correct spelling — (unité 1) ─────────────────────
+  # Words are minted in Go (frenchNumber); distractors are nearby numbers.
+  - id: numbers_1_80
+    kind: number
+    skillPoint: number
+    feature: value
+    instructions: "Choisissez l'écriture en lettres du nombre."
+    promptVersion: tmpl-number-v1
+    min: 1
+    max: 80

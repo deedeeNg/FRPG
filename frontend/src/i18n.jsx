@@ -93,6 +93,16 @@ const strings = {
     'nav.platform': 'Platform',
     'nav.mainMenu': 'Main menu',
 
+    // Adventure map
+    'map.return': 'Return',
+    'map.legend.title': 'Legend',
+    'map.q.submit': 'Submit',
+    'map.q.loading': 'Loading question…',
+    'map.q.correct': 'Correct! You advance.',
+    'map.q.wrong': 'Wrong — the map resets.',
+    'map.q.continue': 'Continue',
+    'map.q.error': 'Could not load the question. Try again.',
+
     // Profile
     'profile.title': 'Profile',
     'profile.logout': 'Log out',
@@ -189,6 +199,16 @@ const strings = {
     'nav.logout': 'Đăng xuất',
     'nav.platform': 'Nền tảng',
     'nav.mainMenu': 'Menu chính',
+
+    // Adventure map
+    'map.return': 'Trở về',
+    'map.legend.title': 'Chú giải',
+    'map.q.submit': 'Gửi',
+    'map.q.loading': 'Đang tải câu hỏi…',
+    'map.q.correct': 'Chính xác! Bạn tiến lên.',
+    'map.q.wrong': 'Sai rồi — bản đồ được đặt lại.',
+    'map.q.continue': 'Tiếp tục',
+    'map.q.error': 'Không tải được câu hỏi. Thử lại.',
 
     // Profile
     'profile.title': 'Hồ sơ',
