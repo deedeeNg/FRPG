@@ -4,6 +4,8 @@ import HudLayout from '../components/HudLayout'
 import { hudColors, roundCorners, liquidGlass, glassTextShadow, pixelated } from '../hud'
 import { useWindowWidth, HUD_BREAKPOINT } from '../hooks/useWindowWidth'
 import { generateMap, SKILL_TYPES } from '../data/map'
+import QuestionModal from '../components/QuestionModal'
+import { fetchExercise } from '../api/exercise'
 import iconSpeech from '../assets/hud/icon-speech.png'
 import iconNote from '../assets/hud/icon-note.png'
 import iconBook from '../assets/hud/icon-book.png'
@@ -90,8 +92,15 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
     return Math.min(1.7, boxW / width, boxH / height)
   }, [boxW, boxH, width, height])
 
-  const [current, setCurrent] = useState(map.nodes[0].id) // "you are here"
+  const startId = map.nodes[0].id
+  const [current, setCurrent] = useState(startId) // "you are here"
   const [hovered, setHovered] = useState(null)
+
+  // Question modal state: the node being attempted, plus the fetched exercise.
+  const [attempt, setAttempt] = useState(null)
+  const [exercise, setExercise] = useState(null)
+  const [qLoading, setQLoading] = useState(false)
+  const [qError, setQError] = useState(false)
 
   // Only nodes one step ahead of the current position are selectable — the same
   // "next step lights up" read as the reference map.
@@ -99,6 +108,33 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
     () => new Set(map.edges.filter((e) => e.from === current).map((e) => e.to)),
     [map, current]
   )
+
+  // Clicking a reachable node opens the question modal (fetches one exercise).
+  const attemptNode = async (nodeId) => {
+    setAttempt(nodeId)
+    setExercise(null)
+    setQError(false)
+    setQLoading(true)
+    try {
+      setExercise(await fetchExercise())
+    } catch {
+      setQError(true)
+    } finally {
+      setQLoading(false)
+    }
+  }
+
+  const closeModal = () => {
+    setAttempt(null)
+    setExercise(null)
+    setQError(false)
+  }
+
+  // Answered: advance to the attempted node on correct, reset to the start on wrong.
+  const resolveAttempt = (correct) => {
+    setCurrent(correct ? attempt : startId)
+    closeModal()
+  }
 
   const boxStyle = compact
     ? { padding: '0 20px 28px', boxSizing: 'border-box' }
@@ -207,8 +243,8 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
             title={label}
             onMouseEnter={() => setHovered(n.id)}
             onMouseLeave={() => setHovered(null)}
-            onClick={() => isReachable && setCurrent(n.id)}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && isReachable && setCurrent(n.id)}
+            onClick={() => isReachable && attemptNode(n.id)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && isReachable && attemptNode(n.id)}
             style={{
               position: 'absolute',
               left: p.x - NODE / 2,
@@ -265,6 +301,16 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
           {returnBtn}
         </div>
       </div>
+
+      {attempt && (
+        <QuestionModal
+          exercise={exercise}
+          loading={qLoading}
+          error={qError}
+          onResult={resolveAttempt}
+          onClose={closeModal}
+        />
+      )}
     </HudLayout>
   )
 }

@@ -94,6 +94,7 @@ services:
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
       - USERS_TABLE=Users
+      - EXERCISES_TABLE=Exercises
     depends_on:
       - dynamodb-local
 
