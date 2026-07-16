@@ -94,7 +94,7 @@ export default function Landing({ onSelectSkill, showHero = true }) {
         {tr('landing.subtitle')}
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 13 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 13 }}>
         {skills.map((skill) => (
           <SkillCard key={skill.key} skill={skill} onClick={onSelectSkill} />
         ))}

@@ -7,6 +7,7 @@ function Segmented({ options, value, onChange, theme: t }) {
     <div
       style={{
         display: 'inline-flex',
+        flexWrap: 'wrap',
         gap: 4,
         padding: 4,
         background: t.tabWrap,

@@ -83,7 +83,7 @@ export default function HudBar({ user, activeRoute, onNavigate, onLogout, showXp
       {/* XP block */}
       {showXpBar && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5, flex: compact ? '1 1 200px' : '0 0 300px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#ffffff', fontWeight: 600, textShadow }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: 10, fontSize: 14, color: '#ffffff', fontWeight: 600, textShadow }}>
             <span>
               {user.name} · {tr('hud.level')} {user.level}
             </span>

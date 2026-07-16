@@ -73,7 +73,9 @@ export default function StatHexagon({
       viewBox={`0 0 ${width} ${size}`}
       role="img"
       aria-label={tr('stats.title')}
-      style={{ display: 'block', maxWidth: '100%', overflow: 'visible' }}
+      // height:auto keeps the aspect ratio when maxWidth shrinks the svg on
+      // narrow screens (a fixed height would letterbox it).
+      style={{ display: 'block', maxWidth: '100%', height: 'auto', overflow: 'visible' }}
     >
       {/* Grid rings */}
       {gridRings.map((ring, r) => (

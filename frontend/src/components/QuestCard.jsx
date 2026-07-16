@@ -9,29 +9,39 @@ const textShadow = '0 2px 0 rgba(43,36,64,0.55)'
  * One quest card in the HUD home grid. A frosty "liquid glass" panel with a
  * solid color chip (pixel skill icon), the skill name over its French label,
  * and a gold "START QUEST" call to action. Clicking routes into its lesson flow.
+ *
+ * When `collapsible` (small screens), the card starts collapsed to icon + title;
+ * tapping it toggles the French label + "START QUEST" open, and only the
+ * "START QUEST" row routes into the quest.
  *   quest: { key, fr, chipColor, icon, iconFilter }
  *   onClick(quest)
  */
-export default function QuestCard({ quest, onClick }) {
+export default function QuestCard({ quest, onClick, collapsible = false }) {
   const { t: tr } = useLanguage()
   const [hover, setHover] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  const collapsed = collapsible && !expanded
+  const start = () => onClick && onClick(quest)
+  const activate = () => (collapsible ? setExpanded((e) => !e) : start())
 
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => onClick && onClick(quest)}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick && onClick(quest)}
+      aria-expanded={collapsible ? expanded : undefined}
+      onClick={activate}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && activate()}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
         ...liquidGlass,
         ...roundCorners,
         background: hover ? liquidGlassHover : liquidGlass.background,
-        padding: '8px 20px',
+        padding: collapsed ? '10px 14px' : '8px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 4,
+        gap: collapsed ? 0 : 4,
         cursor: 'pointer',
         // Snappy, game-like: no transforms, near-instant bg change.
         transition: 'background .08s',
@@ -57,12 +67,22 @@ export default function QuestCard({ quest, onClick }) {
         </div>
         <div style={{ lineHeight: 1.05 }}>
           <div style={{ fontWeight: 700, fontSize: 15, color: '#ffffff', textShadow }}>{tr('skill.' + quest.key)}</div>
-          <div style={{ fontStyle: 'italic', fontSize: 12, color: 'rgba(255,255,255,0.85)', textShadow }}>{quest.fr}</div>
+          {!collapsed && (
+            <div style={{ fontStyle: 'italic', fontSize: 12, color: 'rgba(255,255,255,0.85)', textShadow }}>{quest.fr}</div>
+          )}
         </div>
       </div>
-      <div style={{ fontSize: 11, color: hudColors.gold, fontWeight: 600, letterSpacing: 1, textShadow }}>
-        {tr('quest.start')}
-      </div>
+      {!collapsed && (
+        <div
+          role={collapsible ? 'button' : undefined}
+          tabIndex={collapsible ? 0 : undefined}
+          onClick={collapsible ? (e) => (e.stopPropagation(), start()) : undefined}
+          onKeyDown={collapsible ? (e) => (e.key === 'Enter' || e.key === ' ') && (e.stopPropagation(), start()) : undefined}
+          style={{ fontSize: 11, color: hudColors.gold, fontWeight: 600, letterSpacing: 1, textShadow }}
+        >
+          {tr('quest.start')}
+        </div>
+      )}
     </div>
   )
 }
