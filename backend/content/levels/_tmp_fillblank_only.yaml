@@ -1,0 +1,914 @@
+# Temporary pack: fill_blank ONLY (excludes number/clock — their stems
+# have no '___' marker to fill). Not part of the real A1 pack; delete when done.
+code: A1
+skill: reading
+format: fill_blank
+vocab:
+  nouns: &id002
+  - word: père
+    gender: m
+  - word: mère
+    gender: f
+  - word: frère
+    gender: m
+  - word: sœur
+    gender: f
+  - word: fille
+    gender: f
+  - word: garçon
+    gender: m
+  - word: tête
+    gender: f
+  - word: main
+    gender: f
+  - word: pied
+    gender: m
+  - word: bras
+    gender: m
+  - word: jambe
+    gender: f
+  - word: chemise
+    gender: f
+  - word: robe
+    gender: f
+  - word: pantalon
+    gender: m
+  - word: manteau
+    gender: m
+  - word: veste
+    gender: f
+  - word: pain
+    gender: m
+  - word: pomme
+    gender: f
+  - word: café
+    gender: m
+  - word: gâteau
+    gender: m
+  - word: fromage
+    gender: m
+  - word: poisson
+    gender: m
+  - word: maison
+    gender: f
+  - word: livre
+    gender: m
+  - word: table
+    gender: f
+  - word: chaise
+    gender: f
+  - word: porte
+    gender: f
+  - word: voiture
+    gender: f
+  - word: sac
+    gender: m
+  - word: téléphone
+    gender: m
+  - word: chat
+    gender: m
+  - word: chien
+    gender: m
+  - word: rue
+    gender: f
+  - word: gare
+    gender: f
+  - word: parc
+    gender: m
+  countries: &id003
+  - name: France
+    article: la
+    prep: en
+  - name: Japon
+    article: le
+    prep: au
+  - name: Canada
+    article: le
+    prep: au
+  - name: Espagne
+    article: l'
+    prep: en
+  - name: Portugal
+    article: le
+    prep: au
+  - name: États-Unis
+    article: les
+    prep: aux
+  - name: Italie
+    article: l'
+    prep: en
+  - name: Maroc
+    article: le
+    prep: au
+  - name: Allemagne
+    article: l'
+    prep: en
+  - name: Chine
+    article: la
+    prep: en
+  - name: Brésil
+    article: le
+    prep: au
+  - name: Belgique
+    article: la
+    prep: en
+  - name: Suisse
+    article: la
+    prep: en
+  - name: Sénégal
+    article: le
+    prep: au
+  - name: Mexique
+    article: le
+    prep: au
+  things: &id005
+  - word: maison
+    gender: f
+  - word: livre
+    gender: m
+  - word: table
+    gender: f
+  - word: chaise
+    gender: f
+  - word: voiture
+    gender: f
+  - word: sac
+    gender: m
+  - word: chat
+    gender: m
+  - word: chien
+    gender: m
+  - word: pantalon
+    gender: m
+  - word: robe
+    gender: f
+  - word: chemise
+    gender: f
+  - word: gâteau
+    gender: m
+  foods: &id004
+  - word: pain
+    gender: m
+  - word: fromage
+    gender: m
+  - word: café
+    gender: m
+  - word: poisson
+    gender: m
+  - word: riz
+    gender: m
+  - word: viande
+    gender: f
+  - word: soupe
+    gender: f
+  - word: salade
+    gender: f
+  - word: confiture
+    gender: f
+  - word: limonade
+    gender: f
+  numbers:
+    range: 1-80
+    generated_by: numbers_1_80
+  jours:
+  - lundi
+  - mardi
+  - mercredi
+  - jeudi
+  - vendredi
+  - samedi
+  - dimanche
+  mois:
+  - janvier
+  - février
+  - mars
+  - avril
+  - mai
+  - juin
+  - juillet
+  - août
+  - septembre
+  - octobre
+  - novembre
+  - décembre
+_persons5: &id001
+- subject: Tu
+  index: 1
+- subject: Il
+  index: 2
+- subject: Nous
+  index: 3
+- subject: Vous
+  index: 4
+- subject: Ils
+  index: 5
+teaches:
+- id: present_verbs
+  kind: conjugation
+  skillPoint: conjugation
+  feature: person
+  instructions: Choisissez la bonne forme du verbe.
+  promptVersion: tmpl-present-v1
+  alsoFillBlank: true
+  template: '{subject} ___ {complement}.'
+  persons: *id001
+  verbs:
+  - lemma: parler
+    complement: français
+    forms:
+    - parle
+    - parles
+    - parle
+    - parlons
+    - parlez
+    - parlent
+  - lemma: aimer
+    complement: la musique
+    forms:
+    - aime
+    - aimes
+    - aime
+    - aimons
+    - aimez
+    - aiment
+  - lemma: habiter
+    complement: ici
+    forms:
+    - habite
+    - habites
+    - habite
+    - habitons
+    - habitez
+    - habitent
+  - lemma: travailler
+    complement: beaucoup
+    forms:
+    - travaille
+    - travailles
+    - travaille
+    - travaillons
+    - travaillez
+    - travaillent
+  - lemma: regarder
+    complement: la télévision
+    forms:
+    - regarde
+    - regardes
+    - regarde
+    - regardons
+    - regardez
+    - regardent
+  - lemma: écouter
+    complement: la radio
+    forms:
+    - écoute
+    - écoutes
+    - écoute
+    - écoutons
+    - écoutez
+    - écoutent
+  - lemma: choisir
+    complement: un livre
+    forms:
+    - choisis
+    - choisis
+    - choisit
+    - choisissons
+    - choisissez
+    - choisissent
+  - lemma: finir
+    complement: le travail
+    forms:
+    - finis
+    - finis
+    - finit
+    - finissons
+    - finissez
+    - finissent
+  - lemma: être
+    complement: à Paris
+    forms:
+    - suis
+    - es
+    - est
+    - sommes
+    - êtes
+    - sont
+  - lemma: avoir
+    complement: un chat
+    forms:
+    - ai
+    - as
+    - a
+    - avons
+    - avez
+    - ont
+  - lemma: aller
+    complement: à l'école
+    forms:
+    - vais
+    - vas
+    - va
+    - allons
+    - allez
+    - vont
+  - lemma: faire
+    complement: du sport
+    forms:
+    - fais
+    - fais
+    - fait
+    - faisons
+    - faites
+    - font
+  - lemma: prendre
+    complement: le bus
+    forms:
+    - prends
+    - prends
+    - prend
+    - prenons
+    - prenez
+    - prennent
+  - lemma: vendre
+    complement: des livres
+    forms:
+    - vends
+    - vends
+    - vend
+    - vendons
+    - vendez
+    - vendent
+  - lemma: attendre
+    complement: le bus
+    forms:
+    - attends
+    - attends
+    - attend
+    - attendons
+    - attendez
+    - attendent
+  - lemma: répondre
+    complement: vite
+    forms:
+    - réponds
+    - réponds
+    - répond
+    - répondons
+    - répondez
+    - répondent
+  - lemma: pouvoir
+    complement: partir
+    forms:
+    - peux
+    - peux
+    - peut
+    - pouvons
+    - pouvez
+    - peuvent
+  - lemma: vouloir
+    complement: manger
+    forms:
+    - veux
+    - veux
+    - veut
+    - voulons
+    - voulez
+    - veulent
+  - lemma: devoir
+    complement: travailler
+    forms:
+    - dois
+    - dois
+    - doit
+    - devons
+    - devez
+    - doivent
+- id: il_est_cest
+  kind: lookup
+  skillPoint: il_est_cest
+  feature: structure
+  instructions: Choisissez « Il est », « Elle est » ou « C'est ».
+  promptVersion: tmpl-il-est-cest-v1
+  alsoFillBlank: true
+  templates:
+  - '{filler}'
+  options:
+  - Il est
+  - Elle est
+  - C'est
+  fillerField: sentence
+  keyField: answer
+  rows:
+  - sentence: ___ professeur.
+    answer: Il est
+  - sentence: ___ français.
+    answer: Il est
+  - sentence: ___ grand.
+    answer: Il est
+  - sentence: ___ professeure.
+    answer: Elle est
+  - sentence: ___ française.
+    answer: Elle est
+  - sentence: ___ grande.
+    answer: Elle est
+  - sentence: ___ un professeur.
+    answer: C'est
+  - sentence: ___ une maison.
+    answer: C'est
+  - sentence: ___ un livre.
+    answer: C'est
+- id: present_pronominal_verbs
+  kind: conjugation
+  skillPoint: pronominal_verb
+  feature: person
+  instructions: Choisissez la bonne forme du verbe pronominal.
+  promptVersion: tmpl-present-pronominal-v1
+  alsoFillBlank: true
+  template: '{subject} ___ {complement}.'
+  persons: *id001
+  verbs:
+  - lemma: se lever
+    complement: tôt
+    forms:
+    - me lève
+    - te lèves
+    - se lève
+    - nous levons
+    - vous levez
+    - se lèvent
+  - lemma: se coucher
+    complement: tard
+    forms:
+    - me couche
+    - te couches
+    - se couche
+    - nous couchons
+    - vous couchez
+    - se couchent
+  - lemma: se réveiller
+    complement: à 7 heures
+    forms:
+    - me réveille
+    - te réveilles
+    - se réveille
+    - nous réveillons
+    - vous réveillez
+    - se réveillent
+  - lemma: se laver
+    complement: le matin
+    forms:
+    - me lave
+    - te laves
+    - se lave
+    - nous lavons
+    - vous lavez
+    - se lavent
+- id: article_definite
+  kind: agreement
+  skillPoint: article_gender
+  feature: gender
+  instructions: Choisissez le bon article.
+  promptVersion: tmpl-article-definite-v1
+  alsoFillBlank: true
+  templates:
+  - Voici ___ {word}.
+  - Je vois ___ {word}.
+  - C'est ___ {word}.
+  options:
+  - le
+  - la
+  - les
+  keyByGender:
+    m: le
+    f: la
+  nouns: *id002
+- id: article_indefinite
+  kind: agreement
+  skillPoint: article_indefinite
+  feature: gender
+  instructions: Choisissez le bon article indéfini.
+  promptVersion: tmpl-article-indefinite-v1
+  alsoFillBlank: true
+  templates:
+  - Voici ___ {word}.
+  - C'est ___ {word}.
+  - J'ai ___ {word}.
+  options:
+  - un
+  - une
+  - des
+  keyByGender:
+    m: un
+    f: une
+  nouns: *id002
+- id: demonstrative
+  kind: agreement
+  skillPoint: demonstrative
+  feature: gender
+  instructions: Choisissez le bon adjectif démonstratif.
+  promptVersion: tmpl-demonstrative-v1
+  alsoFillBlank: true
+  templates:
+  - Regarde ___ {word}.
+  - J'aime ___ {word}.
+  options:
+  - ce
+  - cette
+  - ces
+  keyByGender:
+    m: ce
+    f: cette
+  nouns: *id002
+- id: possessive
+  kind: agreement
+  skillPoint: possessive
+  feature: gender
+  instructions: Choisissez le bon adjectif possessif.
+  promptVersion: tmpl-possessive-v1
+  alsoFillBlank: true
+  templates:
+  - C'est ___ {word}.
+  - Voici ___ {word}.
+  options:
+  - mon
+  - ma
+  - mes
+  keyByGender:
+    m: mon
+    f: ma
+  nouns: *id002
+- id: interrogative_quel
+  kind: agreement
+  skillPoint: interrogative
+  feature: gender
+  instructions: Choisissez la bonne forme de « quel ».
+  promptVersion: tmpl-quel-v1
+  alsoFillBlank: true
+  templates:
+  - ___ {word} préfères-tu ?
+  - ___ {word} choisis-tu ?
+  options:
+  - quel
+  - quelle
+  - quels
+  - quelles
+  keyByGender:
+    m: quel
+    f: quelle
+  nouns: *id002
+- id: interrogative_word
+  kind: lookup
+  skillPoint: interrogative_word
+  feature: word_choice
+  instructions: Choisissez le bon mot interrogatif.
+  promptVersion: tmpl-interrogative-word-v1
+  alsoFillBlank: true
+  templates:
+  - '{filler}'
+  options:
+  - Où
+  - Quand
+  - Comment
+  - Pourquoi
+  - Combien
+  - Qui
+  - Que
+  fillerField: sentence
+  keyField: answer
+  rows:
+  - sentence: ___ habites-tu ?
+    answer: Où
+  - sentence: ___ arrives-tu ?
+    answer: Quand
+  - sentence: ___ vas-tu ?
+    answer: Comment
+  - sentence: ___ pleures-tu ?
+    answer: Pourquoi
+  - sentence: ___ coûte ce livre ?
+    answer: Combien
+  - sentence: ___ est là ?
+    answer: Qui
+  - sentence: ___ manges-tu ?
+    answer: Que
+- id: negation
+  kind: lookup
+  skillPoint: negation
+  feature: particle
+  instructions: Complétez avec « pas », « personne » ou « rien ».
+  promptVersion: tmpl-negation-v1
+  alsoFillBlank: true
+  templates:
+  - '{filler}'
+  options:
+  - pas
+  - personne
+  - rien
+  fillerField: sentence
+  keyField: answer
+  rows:
+  - sentence: Il ne travaille ___ aujourd'hui.
+    answer: pas
+  - sentence: Je ne mange ___ de viande.
+    answer: pas
+  - sentence: Nous ne parlons ___ anglais.
+    answer: pas
+  - sentence: Je ne vois ___ dans la rue.
+    answer: personne
+  - sentence: Il n'y a ___ à la maison.
+    answer: personne
+  - sentence: Je ne mange ___ ce soir.
+    answer: rien
+  - sentence: Elle n'entend ___.
+    answer: rien
+- id: country_article
+  kind: lookup
+  skillPoint: country_gender
+  feature: article
+  instructions: Choisissez le bon article.
+  promptVersion: tmpl-country-article-v1
+  alsoFillBlank: true
+  templates:
+  - J'aime ___ {filler}.
+  - Je connais ___ {filler}.
+  - Je visite ___ {filler}.
+  options:
+  - le
+  - la
+  - les
+  - l'
+  fillerField: name
+  keyField: article
+  rows: *id003
+- id: prep_pays
+  kind: lookup
+  skillPoint: preposition
+  feature: preposition
+  instructions: Choisissez la bonne préposition.
+  promptVersion: tmpl-prep-pays-v1
+  alsoFillBlank: true
+  templates:
+  - Je vais ___ {filler}.
+  - Nous allons ___ {filler}.
+  - Il habite ___ {filler}.
+  options:
+  - en
+  - au
+  - aux
+  fillerField: name
+  keyField: prep
+  rows: *id003
+- id: partitif
+  kind: agreement
+  skillPoint: partitive
+  feature: gender
+  instructions: Choisissez le bon article partitif.
+  promptVersion: tmpl-partitif-v1
+  alsoFillBlank: true
+  templates:
+  - Je mange ___ {word}.
+  - Je voudrais ___ {word}.
+  - Il y a ___ {word}.
+  options:
+  - du
+  - de la
+  - de l'
+  - des
+  keyByGender:
+    m: du
+    f: de la
+  nouns: *id004
+- id: adjective_agreement
+  kind: adjective
+  skillPoint: adjective_agreement
+  feature: gender
+  instructions: Accordez l'adjectif avec le nom.
+  promptVersion: tmpl-adj-agreement-v1
+  alsoFillBlank: true
+  template: '{article} {word} est ___.'
+  nouns: *id005
+  adjectives:
+  - lemma: petit
+    m: petit
+    f: petite
+    mpl: petits
+    fpl: petites
+  - lemma: grand
+    m: grand
+    f: grande
+    mpl: grands
+    fpl: grandes
+  - lemma: joli
+    m: joli
+    f: jolie
+    mpl: jolis
+    fpl: jolies
+  - lemma: vert
+    m: vert
+    f: verte
+    mpl: verts
+    fpl: vertes
+  - lemma: noir
+    m: noir
+    f: noire
+    mpl: noirs
+    fpl: noires
+  - lemma: bleu
+    m: bleu
+    f: bleue
+    mpl: bleus
+    fpl: bleues
+- id: futur_proche_verbs
+  kind: conjugation
+  skillPoint: futur_proche
+  feature: person
+  instructions: Choisissez la bonne forme du futur proche.
+  promptVersion: tmpl-futur-proche-v1
+  alsoFillBlank: true
+  template: '{subject} ___ {complement}.'
+  persons: *id001
+  verbs:
+  - lemma: partir
+    complement: demain
+    forms:
+    - vais partir
+    - vas partir
+    - va partir
+    - allons partir
+    - allez partir
+    - vont partir
+  - lemma: manger
+    complement: bientôt
+    forms:
+    - vais manger
+    - vas manger
+    - va manger
+    - allons manger
+    - allez manger
+    - vont manger
+  - lemma: dormir
+    complement: tôt
+    forms:
+    - vais dormir
+    - vas dormir
+    - va dormir
+    - allons dormir
+    - allez dormir
+    - vont dormir
+  - lemma: étudier
+    complement: ce soir
+    forms:
+    - vais étudier
+    - vas étudier
+    - va étudier
+    - allons étudier
+    - allez étudier
+    - vont étudier
+  - lemma: voyager
+    complement: cet été
+    forms:
+    - vais voyager
+    - vas voyager
+    - va voyager
+    - allons voyager
+    - allez voyager
+    - vont voyager
+- id: passe_compose_avoir
+  kind: conjugation
+  skillPoint: passe_compose
+  feature: person
+  instructions: Choisissez la bonne forme du passé composé.
+  promptVersion: tmpl-passe-compose-avoir-v1
+  alsoFillBlank: true
+  template: '{subject} ___ {complement}.'
+  persons: *id001
+  verbs:
+  - lemma: manger
+    complement: une pomme
+    forms:
+    - ai mangé
+    - as mangé
+    - a mangé
+    - avons mangé
+    - avez mangé
+    - ont mangé
+  - lemma: regarder
+    complement: un film
+    forms:
+    - ai regardé
+    - as regardé
+    - a regardé
+    - avons regardé
+    - avez regardé
+    - ont regardé
+  - lemma: finir
+    complement: le travail
+    forms:
+    - ai fini
+    - as fini
+    - a fini
+    - avons fini
+    - avez fini
+    - ont fini
+  - lemma: choisir
+    complement: un livre
+    forms:
+    - ai choisi
+    - as choisi
+    - a choisi
+    - avons choisi
+    - avez choisi
+    - ont choisi
+  - lemma: prendre
+    complement: le bus
+    forms:
+    - ai pris
+    - as pris
+    - a pris
+    - avons pris
+    - avez pris
+    - ont pris
+  - lemma: faire
+    complement: du sport
+    forms:
+    - ai fait
+    - as fait
+    - a fait
+    - avons fait
+    - avez fait
+    - ont fait
+- id: passe_compose_etre
+  kind: passe_compose_etre
+  skillPoint: passe_compose
+  feature: gender
+  instructions: Accordez le participe passé avec le sujet.
+  promptVersion: tmpl-passe-compose-etre-v1
+  alsoFillBlank: true
+  template: '{subject} ___ {complement}.'
+  aux:
+  - suis
+  - es
+  - est
+  - sommes
+  - êtes
+  - sont
+  persons:
+  - subject: Il
+    index: 2
+    gender: m
+    plural: false
+  - subject: Elle
+    index: 2
+    gender: f
+    plural: false
+  - subject: Ils
+    index: 5
+    gender: m
+    plural: true
+  - subject: Elles
+    index: 5
+    gender: f
+    plural: true
+  verbs:
+  - lemma: aller
+    complement: au marché
+    participle:
+      m: allé
+      f: allée
+      mpl: allés
+      fpl: allées
+  - lemma: venir
+    complement: à midi
+    participle:
+      m: venu
+      f: venue
+      mpl: venus
+      fpl: venues
+  - lemma: partir
+    complement: à 8 heures
+    participle:
+      m: parti
+      f: partie
+      mpl: partis
+      fpl: parties
+  - lemma: sortir
+    complement: ce soir
+    participle:
+      m: sorti
+      f: sortie
+      mpl: sortis
+      fpl: sorties
+  - lemma: arriver
+    complement: en retard
+    participle:
+      m: arrivé
+      f: arrivée
+      mpl: arrivés
+      fpl: arrivées
+  - lemma: rentrer
+    complement: tard
+    participle:
+      m: rentré
+      f: rentrée
+      mpl: rentrés
+      fpl: rentrées

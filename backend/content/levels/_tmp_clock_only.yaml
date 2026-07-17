@@ -1,0 +1,13 @@
+# Temporary pack: telling_time ONLY, for manually testing the clock UI.
+# Not part of the real A1 pack — delete when done testing.
+code: A1
+skill: reading
+format: multiple_choice
+
+teaches:
+  - id: telling_time
+    kind: clock
+    skillPoint: telling_time
+    feature: time_phrase
+    instructions: "Quelle heure est-il ?"
+    promptVersion: tmpl-clock-v1

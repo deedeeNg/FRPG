@@ -19,17 +19,19 @@ export async function fetchExercise() {
 }
 
 /**
- * gradeExercise submits selected choice ids and returns whether they were correct.
+ * gradeExercise submits an answer and returns whether it was correct. Pass
+ * `{ selected }` (chosen choice ids) for multiple_choice, or `{ text }` (the
+ * typed answer) for fill_blank — whichever matches the exercise's own format.
  * @param {string} exerciseId
- * @param {string[]} selected  chosen choice ids
+ * @param {{selected?: string[], text?: string}} answer
  * @returns {Promise<boolean>} true when correct
  * @throws {Error} on non-2xx
  */
-export async function gradeExercise(exerciseId, selected) {
+export async function gradeExercise(exerciseId, answer) {
   const res = await fetch('/api/exercise/grade', {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ exerciseId, selected }),
+    body: JSON.stringify({ exerciseId, ...answer }),
   })
   if (!res.ok) throw new Error(`Could not grade (${res.status})`)
   const data = await res.json()

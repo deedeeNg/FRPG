@@ -125,10 +125,18 @@ vocab:
   jours: [lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche]
   mois:  [janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]
 
+# Shared subject list for every conjugation-kind entry below: forms are indexed
+# je,tu,il,nous,vous,ils (0..5); persons start at index 1 ("je" is skipped to
+# avoid stem elision "j'aime" leaking the answer's first letter).
+_persons5: &persons5
+  - { subject: Tu, index: 1 }
+  - { subject: Il, index: 2 }
+  - { subject: Nous, index: 3 }
+  - { subject: Vous, index: 4 }
+  - { subject: Ils, index: 5 }
+
 teaches:
-  # ── Conjugation: present tense, -er/-ir/irregular verbs (unités 1–6) ─────────
-  # forms indexed je,tu,il,nous,vous,ils (0..5). persons start at index 1 ("je" is
-  # skipped to avoid stem elision "j'aime" leaking the answer's first letter).
+  # ── Conjugation: present tense, -er/-ir/-re/-oir + irregular verbs (Ch. 1–2) ─
   # complements are chosen to read naturally across every subject (no agreement trap).
   - id: present_verbs
     kind: conjugation
@@ -136,13 +144,9 @@ teaches:
     feature: person
     instructions: "Choisissez la bonne forme du verbe."
     promptVersion: tmpl-present-v1
+    alsoFillBlank: true
     template: "{subject} ___ {complement}."
-    persons:
-      - { subject: Tu, index: 1 }
-      - { subject: Il, index: 2 }
-      - { subject: Nous, index: 3 }
-      - { subject: Vous, index: 4 }
-      - { subject: Ils, index: 5 }
+    persons: *persons5
     verbs:
       - { lemma: parler,     complement: "français",       forms: [parle, parles, parle, parlons, parlez, parlent] }
       - { lemma: aimer,      complement: "la musique",     forms: [aime, aimes, aime, aimons, aimez, aiment] }
@@ -157,6 +161,62 @@ teaches:
       - { lemma: aller,      complement: "à l'école",      forms: [vais, vas, va, allons, allez, vont] }
       - { lemma: faire,      complement: "du sport",       forms: [fais, fais, fait, faisons, faites, font] }
       - { lemma: prendre,    complement: "le bus",         forms: [prends, prends, prend, prenons, prenez, prennent] }
+      # -re verbs (Ch. 2B)
+      - { lemma: vendre,     complement: "des livres",     forms: [vends, vends, vend, vendons, vendez, vendent] }
+      - { lemma: attendre,   complement: "le bus",         forms: [attends, attends, attend, attendons, attendez, attendent] }
+      - { lemma: répondre,   complement: "vite",           forms: [réponds, réponds, répond, répondons, répondez, répondent] }
+      # modal -oir verbs (Ch. 2D) — blank is just the conjugated modal; the
+      # infinitive complement is fixed text, not part of the answer.
+      - { lemma: pouvoir,    complement: "partir",         forms: [peux, peux, peut, pouvons, pouvez, peuvent] }
+      - { lemma: vouloir,    complement: "manger",         forms: [veux, veux, veut, voulons, voulez, veulent] }
+      - { lemma: devoir,     complement: "travailler",     forms: [dois, dois, doit, devons, devez, doivent] }
+
+  # ── Il est / Elle est / C'est (Exercices de grammaire, ch. 1B) ──────────────
+  # Structure choice, not a gender agreement: bare profession/adjective (no
+  # article) takes Il/Elle est; article + noun takes C'est. Each row is a
+  # complete blanked sentence (kind: lookup with a passthrough "{filler}"
+  # template lets one row carry arbitrary text, not just a single slot word).
+  - id: il_est_cest
+    kind: lookup
+    skillPoint: il_est_cest
+    feature: structure
+    instructions: "Choisissez « Il est », « Elle est » ou « C'est »."
+    promptVersion: tmpl-il-est-cest-v1
+    alsoFillBlank: true
+    templates: ["{filler}"]
+    options: ["Il est", "Elle est", "C'est"]
+    fillerField: sentence
+    keyField: answer
+    rows:
+      - { sentence: "___ professeur.", answer: "Il est" }
+      - { sentence: "___ français.", answer: "Il est" }
+      - { sentence: "___ grand.", answer: "Il est" }
+      - { sentence: "___ professeure.", answer: "Elle est" }
+      - { sentence: "___ française.", answer: "Elle est" }
+      - { sentence: "___ grande.", answer: "Elle est" }
+      - { sentence: "___ un professeur.", answer: "C'est" }
+      - { sentence: "___ une maison.", answer: "C'est" }
+      - { sentence: "___ un livre.", answer: "C'est" }
+
+  # ── Pronominal verbs (Exercices de grammaire, ch. 2C) ───────────────────────
+  # The reflexive pronoun is folded into each form string (e.g. "te lèves") since
+  # the template only supplies the subject separately — "Tu" + "te lèves" = "Tu te
+  # lèves tôt." Reflexive pronoun == subject pronoun for nous/vous, so this holds
+  # for every person without special-casing.
+  - id: present_pronominal_verbs
+    kind: conjugation
+    skillPoint: pronominal_verb
+    feature: person
+    instructions: "Choisissez la bonne forme du verbe pronominal."
+    promptVersion: tmpl-present-pronominal-v1
+    alsoFillBlank: true
+    template: "{subject} ___ {complement}."
+    persons: *persons5
+    verbs:
+      - { lemma: se lever,     complement: "tôt",         forms: [me lève, te lèves, se lève, nous levons, vous levez, se lèvent] }
+      - { lemma: se coucher,   complement: "tard",        forms: [me couche, te couches, se couche, nous couchons, vous couchez, se couchent] }
+      - { lemma: se réveiller, complement: "à 7 heures",  forms: [me réveille, te réveilles, se réveille, nous réveillons, vous réveillez, se réveillent] }
+      - { lemma: se laver,     complement: "le matin",    forms: [me lave, te laves, se lave, nous lavons, vous lavez, se lavent] }
 
   # ── Definite article (le/la/les) — gender (unité 1) ─────────────────────────
   - id: article_definite
@@ -165,6 +225,7 @@ teaches:
     feature: gender
     instructions: "Choisissez le bon article."
     promptVersion: tmpl-article-definite-v1
+    alsoFillBlank: true
     templates: ["Voici ___ {word}.", "Je vois ___ {word}.", "C'est ___ {word}."]
     options: [le, la, les]
     keyByGender: { m: le, f: la }
@@ -177,6 +238,7 @@ teaches:
     feature: gender
     instructions: "Choisissez le bon article indéfini."
     promptVersion: tmpl-article-indefinite-v1
+    alsoFillBlank: true
     templates: ["Voici ___ {word}.", "C'est ___ {word}.", "J'ai ___ {word}."]
     options: [un, une, des]
     keyByGender: { m: un, f: une }
@@ -189,6 +251,7 @@ teaches:
     feature: gender
     instructions: "Choisissez le bon adjectif démonstratif."
     promptVersion: tmpl-demonstrative-v1
+    alsoFillBlank: true
     templates: ["Regarde ___ {word}.", "J'aime ___ {word}."]
     options: [ce, cette, ces]
     keyByGender: { m: ce, f: cette }
@@ -201,6 +264,7 @@ teaches:
     feature: gender
     instructions: "Choisissez le bon adjectif possessif."
     promptVersion: tmpl-possessive-v1
+    alsoFillBlank: true
     templates: ["C'est ___ {word}.", "Voici ___ {word}."]
     options: [mon, ma, mes]
     keyByGender: { m: mon, f: ma }
@@ -213,10 +277,59 @@ teaches:
     feature: gender
     instructions: "Choisissez la bonne forme de « quel »."
     promptVersion: tmpl-quel-v1
+    alsoFillBlank: true
     templates: ["___ {word} préfères-tu ?", "___ {word} choisis-tu ?"]
     options: [quel, quelle, quels, quelles]
     keyByGender: { m: quel, f: quelle }
     nouns: *nouns
+
+  # ── Interrogative words: qui/que/où/quand/comment/pourquoi/combien (ch. 3B) ──
+  # Word choice, not agreement — each row is a complete blanked question (same
+  # passthrough-template trick as il_est_cest).
+  - id: interrogative_word
+    kind: lookup
+    skillPoint: interrogative_word
+    feature: word_choice
+    instructions: "Choisissez le bon mot interrogatif."
+    promptVersion: tmpl-interrogative-word-v1
+    alsoFillBlank: true
+    templates: ["{filler}"]
+    options: [Où, Quand, Comment, Pourquoi, Combien, Qui, Que]
+    fillerField: sentence
+    keyField: answer
+    rows:
+      - { sentence: "___ habites-tu ?", answer: Où }
+      - { sentence: "___ arrives-tu ?", answer: Quand }
+      - { sentence: "___ vas-tu ?", answer: Comment }
+      - { sentence: "___ pleures-tu ?", answer: Pourquoi }
+      - { sentence: "___ coûte ce livre ?", answer: Combien }
+      - { sentence: "___ est là ?", answer: Qui }
+      - { sentence: "___ manges-tu ?", answer: Que }
+
+  # ── Negation: ne...pas / ne...personne / ne...rien (Exercices de grammaire,
+  # ch. 4) ──────────────────────────────────────────────────────────────────
+  # Which particle fits depends on what's being negated (a general action, a
+  # person, a thing) — that's the pedagogical point, so each row is a complete
+  # blanked sentence rather than a single-word slot fill.
+  - id: negation
+    kind: lookup
+    skillPoint: negation
+    feature: particle
+    instructions: "Complétez avec « pas », « personne » ou « rien »."
+    promptVersion: tmpl-negation-v1
+    alsoFillBlank: true
+    templates: ["{filler}"]
+    options: [pas, personne, rien]
+    fillerField: sentence
+    keyField: answer
+    rows:
+      - { sentence: "Il ne travaille ___ aujourd'hui.", answer: pas }
+      - { sentence: "Je ne mange ___ de viande.", answer: pas }
+      - { sentence: "Nous ne parlons ___ anglais.", answer: pas }
+      - { sentence: "Je ne vois ___ dans la rue.", answer: personne }
+      - { sentence: "Il n'y a ___ à la maison.", answer: personne }
+      - { sentence: "Je ne mange ___ ce soir.", answer: rien }
+      - { sentence: "Elle n'entend ___.", answer: rien }
 
   # ── Definite article before a country (le/la/les/l') — gender (unités 1, 9) ──
   # Countries carry gender + elision + number, so the answer is a fixed lookup per
@@ -228,6 +341,7 @@ teaches:
     feature: article
     instructions: "Choisissez le bon article."
     promptVersion: tmpl-country-article-v1
+    alsoFillBlank: true
     templates: ["J'aime ___ {filler}.", "Je connais ___ {filler}.", "Je visite ___ {filler}."]
     options: [le, la, les, "l'"]
     fillerField: name
@@ -241,6 +355,7 @@ teaches:
     feature: preposition
     instructions: "Choisissez la bonne préposition."
     promptVersion: tmpl-prep-pays-v1
+    alsoFillBlank: true
     templates: ["Je vais ___ {filler}.", "Nous allons ___ {filler}.", "Il habite ___ {filler}."]
     options: [en, au, aux]
     fillerField: name
@@ -254,6 +369,7 @@ teaches:
     feature: gender
     instructions: "Choisissez le bon article partitif."
     promptVersion: tmpl-partitif-v1
+    alsoFillBlank: true
     templates: ["Je mange ___ {word}.", "Je voudrais ___ {word}.", "Il y a ___ {word}."]
     options: [du, "de la", "de l'", des]
     keyByGender: { m: du, f: "de la" }
@@ -266,6 +382,7 @@ teaches:
     feature: gender
     instructions: "Accordez l'adjectif avec le nom."
     promptVersion: tmpl-adj-agreement-v1
+    alsoFillBlank: true
     template: "{article} {word} est ___."
     nouns: *things
     adjectives:
@@ -275,6 +392,76 @@ teaches:
       - { lemma: vert,  m: vert,  f: verte,  mpl: verts,  fpl: vertes }
       - { lemma: noir,  m: noir,  f: noire,  mpl: noirs,  fpl: noires }
       - { lemma: bleu,  m: bleu,  f: bleue,  mpl: bleus,  fpl: bleues }
+
+  # ── Futur proche: aller + infinitif (Exercices de grammaire, ch. 14) ────────
+  # The blank is just the conjugated "aller"; the infinitive rides along inside
+  # the form string (e.g. "vas partir"), so this fits the conjugation builder
+  # exactly like a modal verb.
+  - id: futur_proche_verbs
+    kind: conjugation
+    skillPoint: futur_proche
+    feature: person
+    instructions: "Choisissez la bonne forme du futur proche."
+    promptVersion: tmpl-futur-proche-v1
+    alsoFillBlank: true
+    template: "{subject} ___ {complement}."
+    persons: *persons5
+    verbs:
+      - { lemma: partir,   complement: "demain",    forms: [vais partir, vas partir, va partir, allons partir, allez partir, vont partir] }
+      - { lemma: manger,   complement: "bientôt",   forms: [vais manger, vas manger, va manger, allons manger, allez manger, vont manger] }
+      - { lemma: dormir,   complement: "tôt",       forms: [vais dormir, vas dormir, va dormir, allons dormir, allez dormir, vont dormir] }
+      - { lemma: étudier,  complement: "ce soir",   forms: [vais étudier, vas étudier, va étudier, allons étudier, allez étudier, vont étudier] }
+      - { lemma: voyager,  complement: "cet été",   forms: [vais voyager, vas voyager, va voyager, allons voyager, allez voyager, vont voyager] }
+
+  # ── Passé composé with avoir (Exercices de grammaire, ch. 15A/B/D) ──────────
+  # The past participle never agrees with the subject for avoir-verbs, so all
+  # five persons are safe to drill (unlike the être variant below).
+  - id: passe_compose_avoir
+    kind: conjugation
+    skillPoint: passe_compose
+    feature: person
+    instructions: "Choisissez la bonne forme du passé composé."
+    promptVersion: tmpl-passe-compose-avoir-v1
+    alsoFillBlank: true
+    template: "{subject} ___ {complement}."
+    persons: *persons5
+    verbs:
+      - { lemma: manger,   complement: "une pomme",   forms: [ai mangé, as mangé, a mangé, avons mangé, avez mangé, ont mangé] }
+      - { lemma: regarder, complement: "un film",     forms: [ai regardé, as regardé, a regardé, avons regardé, avez regardé, ont regardé] }
+      - { lemma: finir,    complement: "le travail",  forms: [ai fini, as fini, a fini, avons fini, avez fini, ont fini] }
+      - { lemma: choisir,  complement: "un livre",    forms: [ai choisi, as choisi, a choisi, avons choisi, avez choisi, ont choisi] }
+      - { lemma: prendre,  complement: "le bus",      forms: [ai pris, as pris, a pris, avons pris, avez pris, ont pris] }
+      - { lemma: faire,    complement: "du sport",    forms: [ai fait, as fait, a fait, avons fait, avez fait, ont fait] }
+
+  # ── Passé composé with être (Exercices de grammaire, ch. 15C) ───────────────
+  # The past participle agrees with the SUBJECT's gender+number for être-verbs
+  # ("il est allé" / "elle est allée" / "elles sont allées"). `kind:
+  # passe_compose_etre` models this directly: `aux` is être's conjugation (shared —
+  # it never varies), and each verb's `participle` gives the four agreement forms
+  # (same shape as an `adjective` skill's forms, because that's exactly what a past
+  # participle is doing here). Persons carry `gender`/`plural` so the builder can
+  # pick the right participle form per subject — Il/Elle/Ils/Elles all covered.
+  - id: passe_compose_etre
+    kind: passe_compose_etre
+    skillPoint: passe_compose
+    feature: gender
+    instructions: "Accordez le participe passé avec le sujet."
+    promptVersion: tmpl-passe-compose-etre-v1
+    alsoFillBlank: true
+    template: "{subject} ___ {complement}."
+    aux: [suis, es, est, sommes, êtes, sont]
+    persons:
+      - { subject: Il, index: 2, gender: m, plural: false }
+      - { subject: Elle, index: 2, gender: f, plural: false }
+      - { subject: Ils, index: 5, gender: m, plural: true }
+      - { subject: Elles, index: 5, gender: f, plural: true }
+    verbs:
+      - { lemma: aller,   complement: "au marché",  participle: { m: allé, f: allée, mpl: allés, fpl: allées } }
+      - { lemma: venir,   complement: "à midi",     participle: { m: venu, f: venue, mpl: venus, fpl: venues } }
+      - { lemma: partir,  complement: "à 8 heures", participle: { m: parti, f: partie, mpl: partis, fpl: parties } }
+      - { lemma: sortir,  complement: "ce soir",    participle: { m: sorti, f: sortie, mpl: sortis, fpl: sorties } }
+      - { lemma: arriver, complement: "en retard",  participle: { m: arrivé, f: arrivée, mpl: arrivés, fpl: arrivées } }
+      - { lemma: rentrer, complement: "tard",       participle: { m: rentré, f: rentrée, mpl: rentrés, fpl: rentrées } }
 
   # ── Numbers 1–80: pick the correct spelling — (unité 1) ─────────────────────
   # Words are minted in Go (frenchNumber); distractors are nearby numbers.
@@ -286,3 +473,20 @@ teaches:
     promptVersion: tmpl-number-v1
     min: 1
     max: 80
+
+  # ── Telling the time (unité 4 territory) ─────────────────────────────────────
+  # The stimulus is a clock face, not text: Content.clock carries {hour,minute},
+  # rendered client-side as an SVG clock rather than a text prompt. Every hour:
+  # minute (0-23 × 0-59) is minted ALGORITHMICALLY in Go (frenchTime — same
+  # "algorithm, not a curated list" approach as numbers_1_80), in BOTH French
+  # registers: l'heure officielle (24h, "vingt-trois heures trente-six") and
+  # everyday 12h speech with a matin/après-midi/soir qualifier ("onze heures
+  # trente-six du soir"). MC-only — not flagged alsoFillBlank, since exact-
+  # matching a typed multi-word time phrase risks rejecting a learner's otherwise-
+  # correct answer over accents/spacing.
+  - id: telling_time
+    kind: clock
+    skillPoint: telling_time
+    feature: time_phrase
+    instructions: "Quelle heure est-il ?"
+    promptVersion: tmpl-clock-v1
