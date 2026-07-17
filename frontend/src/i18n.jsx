@@ -87,7 +87,6 @@ const strings = {
     // Sidebar / nav
     'nav.home': 'Home',
     'nav.map': 'Map',
-    'nav.learning': 'Learning',
     'nav.settings': 'Settings',
     'nav.logout': 'Log Out',
     'nav.platform': 'Platform',
@@ -194,7 +193,6 @@ const strings = {
     // Sidebar / nav
     'nav.home': 'Trang chủ',
     'nav.map': 'Bản đồ',
-    'nav.learning': 'Học tập',
     'nav.settings': 'Cài đặt',
     'nav.logout': 'Đăng xuất',
     'nav.platform': 'Nền tảng',
