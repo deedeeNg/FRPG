@@ -8,8 +8,10 @@ import { gradeExercise } from '../api/exercise'
 // caller (Map) advances on true and resets on false. UI-only beyond the grade call.
 //   exercise: the served item (answer stripped) | null while loading
 //   loading, error: fetch state from the caller
+//   attempts: remaining life pool before this attempt (for the wrong-answer copy)
+//   final: the attempted node is the last one — a correct answer finishes the run
 //   onResult(correct: boolean), onClose()
-export default function QuestionModal({ exercise, loading, error, onResult, onClose }) {
+export default function QuestionModal({ exercise, loading, error, attempts, final, onResult, onClose }) {
   const { t: tr } = useLanguage()
   const [selected, setSelected] = useState(null)
   const [result, setResult] = useState(null) // null | { correct }
@@ -74,7 +76,11 @@ export default function QuestionModal({ exercise, loading, error, onResult, onCl
                 color: result.correct ? hudColors.green : hudColors.rose,
               }}
             >
-              {tr(result.correct ? 'map.q.correct' : 'map.q.wrong')}
+              {result.correct
+                ? tr(final ? 'map.q.finish' : 'map.q.correct')
+                : attempts - 1 > 0
+                  ? tr('map.q.wrongLives').replace('{n}', attempts - 1)
+                  : tr('map.q.wrong')}
             </div>
             <button type="button" onClick={() => onResult(result.correct)} style={primaryBtn}>
               {tr('map.q.continue')}

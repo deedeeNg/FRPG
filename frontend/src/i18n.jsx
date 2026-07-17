@@ -95,10 +95,13 @@ const strings = {
     // Adventure map
     'map.return': 'Return',
     'map.legend.title': 'Legend',
+    'map.attempts': 'attempts remaining',
     'map.q.submit': 'Submit',
     'map.q.loading': 'Loading question…',
     'map.q.correct': 'Correct! You advance.',
+    'map.q.finish': 'You finished! The map resets.',
     'map.q.wrong': 'Wrong — the map resets.',
+    'map.q.wrongLives': 'Wrong answer! {n} hearts remaining.',
     'map.q.continue': 'Continue',
     'map.q.error': 'Could not load the question. Try again.',
 
@@ -201,10 +204,13 @@ const strings = {
     // Adventure map
     'map.return': 'Trở về',
     'map.legend.title': 'Chú giải',
+    'map.attempts': 'lượt còn lại',
     'map.q.submit': 'Gửi',
     'map.q.loading': 'Đang tải câu hỏi…',
     'map.q.correct': 'Chính xác! Bạn tiến lên.',
+    'map.q.finish': 'Bạn đã hoàn thành! Bản đồ được đặt lại.',
     'map.q.wrong': 'Sai rồi — bản đồ được đặt lại.',
+    'map.q.wrongLives': 'Sai rồi! Còn {n} tim.',
     'map.q.continue': 'Tiếp tục',
     'map.q.error': 'Không tải được câu hỏi. Thử lại.',
 

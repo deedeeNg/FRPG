@@ -4,12 +4,52 @@ import HudLayout from '../components/HudLayout'
 import { hudColors, roundCorners, liquidGlass, glassTextShadow, pixelated } from '../hud'
 import { useWindowWidth, HUD_BREAKPOINT } from '../hooks/useWindowWidth'
 import { generateMap, SKILL_TYPES } from '../data/map'
+import { read as readProgress, write as writeProgress, MAX_ATTEMPTS } from '../data/mapProgress'
 import QuestionModal from '../components/QuestionModal'
 import { fetchExercise } from '../api/exercise'
 import iconSpeech from '../assets/hud/icon-speech.png'
 import iconNote from '../assets/hud/icon-note.png'
 import iconBook from '../assets/hud/icon-book.png'
 import iconQuill from '../assets/hud/icon-quill.png'
+
+// Pixel-art heart bitmap (8×7): 0 = empty, 1 = outline, 2 = fill. Drawn as unit
+// rects in an 8×7 viewBox so it scales crisply like the rest of the pixel art.
+const HEART_BITMAP = [
+  '01100110',
+  '12211221',
+  '12222221',
+  '12222221',
+  '01222210',
+  '00122100',
+  '00011000',
+]
+
+// One life heart. `filled` = a remaining attempt (red); otherwise a spent slot
+// (grey), matching the classic "❤❤♡" life bar in the reference.
+function Heart({ filled, cell = 5 }) {
+  const outline = 'rgba(43,36,64,0.85)'
+  const fill = filled ? '#e0384f' : 'rgba(220,220,224,0.85)'
+  const w = 8
+  const h = 7
+  return (
+    <svg
+      width={w * cell}
+      height={h * cell}
+      viewBox={`0 0 ${w} ${h}`}
+      shapeRendering="crispEdges"
+      style={{ ...pixelated, filter: 'drop-shadow(0 1px 1px rgba(43,36,64,0.55))' }}
+      aria-hidden="true"
+    >
+      {HEART_BITMAP.flatMap((r, y) =>
+        [...r].map((c, x) =>
+          c === '0' ? null : (
+            <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={c === '1' ? outline : fill} />
+          )
+        )
+      )}
+    </svg>
+  )
+}
 
 // Same icon + chip color per skill as the Home quest cards, so a map node reads
 // as "an exercise of this type" using the app's existing visual language.
@@ -74,8 +114,9 @@ function useContentSize(ref) {
  * The frame occupies ~80% of the available box. UI-only: node choice is local
  * state, not wired to any quest/backend logic yet.
  *   activeRoute, onNavigate(route), onLogout — HUD nav (same contract as Home)
+ *   userId — persists progress per user in localStorage (see data/mapProgress.js)
  */
-export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
+export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId }) {
   const { t: tr } = useLanguage()
   const compact = useWindowWidth() < HUD_BREAKPOINT
 
@@ -93,8 +134,16 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
   }, [boxW, boxH, width, height])
 
   const startId = map.nodes[0].id
-  const [current, setCurrent] = useState(startId) // "you are here"
+  // Restore saved progress on mount (per user), falling back to a fresh run.
+  const saved = useMemo(() => readProgress(userId), [userId])
+  const [current, setCurrent] = useState(saved?.current ?? startId) // "you are here"
+  const [attempts, setAttempts] = useState(saved?.attempts ?? MAX_ATTEMPTS) // global pool
   const [hovered, setHovered] = useState(null)
+
+  // Persist progress whenever the current node or the attempt pool changes.
+  useEffect(() => {
+    writeProgress(userId, { current, attempts })
+  }, [userId, current, attempts])
 
   // Question modal state: the node being attempted, plus the fetched exercise.
   const [attempt, setAttempt] = useState(null)
@@ -130,9 +179,22 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
     setQError(false)
   }
 
-  // Answered: advance to the attempted node on correct, reset to the start on wrong.
+  // A node in the last column completes the run.
+  const isFinalNode = (id) => map.nodes.find((n) => n.id === id)?.col === map.columns - 1
+
+  // Answered. Correct: advance to the attempted node (pool unchanged) — unless it
+  // was the final node, which finishes the run and resets the whole map (back to
+  // start, pool refilled). Wrong: decrement the shared pool; when it hits 0 the
+  // map resets the same way.
   const resolveAttempt = (correct) => {
-    setCurrent(correct ? attempt : startId)
+    if (correct && !isFinalNode(attempt)) {
+      setCurrent(attempt)
+    } else if (correct || attempts <= 1) {
+      setCurrent(startId)
+      setAttempts(MAX_ATTEMPTS)
+    } else {
+      setAttempts(attempts - 1)
+    }
     closeModal()
   }
 
@@ -178,6 +240,20 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
           </div>
         )
       })}
+    </div>
+  )
+
+  // Life bar: one heart per attempt in the global pool, filled = remaining.
+  // Top-left, just below the HUD navbar (mirrors the legend on the right).
+  const lives = (
+    <div
+      role="img"
+      aria-label={`${attempts}/${MAX_ATTEMPTS} ${tr('map.attempts')}`}
+      style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6 }}
+    >
+      {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
+        <Heart key={i} filled={i < attempts} />
+      ))}
     </div>
   )
 
@@ -298,6 +374,7 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
               {legend}
             </div>
           </div>
+          {lives}
           {returnBtn}
         </div>
       </div>
@@ -307,6 +384,8 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout }) {
           exercise={exercise}
           loading={qLoading}
           error={qError}
+          attempts={attempts}
+          final={isFinalNode(attempt)}
           onResult={resolveAttempt}
           onClose={closeModal}
         />

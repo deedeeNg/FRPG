@@ -106,7 +106,7 @@ function Screen() {
             onSelectQuest={() => setScreen('learning')}
           />
         ) : screen === 'map' ? (
-          <Map activeRoute="map" onNavigate={setScreen} onLogout={onLogout} />
+          <Map activeRoute="map" onNavigate={setScreen} onLogout={onLogout} userId={session.userId} />
         ) : (
           <HudLayout activeRoute={screen} onNavigate={setScreen} onLogout={onLogout} />
         )}
