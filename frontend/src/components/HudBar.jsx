@@ -8,7 +8,6 @@ import knight from '../assets/hud/knight.png'
 import fleur from '../assets/hud/fleur.png'
 import iconHome from '../assets/hud/icon-home.png'
 import iconMap from '../assets/hud/icon-map.png'
-import iconBook from '../assets/hud/icon-book.png'
 import iconGear from '../assets/hud/icon-gear.png'
 import iconDoor from '../assets/hud/icon-door.png'
 
@@ -17,7 +16,6 @@ import iconDoor from '../assets/hud/icon-door.png'
 const NAV = [
   { route: 'home', icon: iconHome, labelKey: 'nav.home' },
   { route: 'map', icon: iconMap, labelKey: 'nav.map' },
-  { route: 'learning', icon: iconBook, labelKey: 'nav.learning' },
   { route: 'settings', icon: iconGear, labelKey: 'nav.settings' },
   { route: 'logout', icon: iconDoor, labelKey: 'nav.logout' },
 ]
