@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { useTheme } from '../theme'
+import { hudColors, roundCorners, glassDark, glassTextShadow } from '../hud'
 
-// shadcn AlertDialog look/behavior in the project's inline-style system: modal
-// with a dimmed backdrop (no outside-click dismiss), centered card, header
-// (title + muted description) and a right-aligned footer (outline Cancel +
-// primary Action). Escape triggers Cancel.
+// Confirmation modal in the pixel-art RPG HUD style (matches QuestionModal and
+// the Legend card): dark liquid-glass panel over a dimmed backdrop (no
+// outside-click dismiss), gold title, and a right-aligned footer with a ghost
+// Cancel and a gold Action (rose when destructive). Escape triggers Cancel.
 export default function ConfirmDialog({
   open,
   title,
@@ -15,10 +15,9 @@ export default function ConfirmDialog({
   onCancel,
   onConfirm,
 }) {
-  const { theme: t } = useTheme()
   const actionRef = useRef(null)
 
-  // Escape cancels; move focus to the action button on open (shadcn behavior).
+  // Escape cancels; move focus to the action button on open.
   useEffect(() => {
     if (!open) return
     const onKey = (e) => {
@@ -34,8 +33,8 @@ export default function ConfirmDialog({
 
   if (!open) return null
 
-  const actionBg = destructive ? '#dc2626' : t.primary
-  const actionHover = destructive ? '#b91c1c' : t.primaryHover
+  const actionBg = destructive ? hudColors.rose : hudColors.gold
+  const actionInk = destructive ? '#ffffff' : hudColors.ink
 
   return (
     <div
@@ -50,10 +49,11 @@ export default function ConfirmDialog({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 16,
-        fontFamily: "'Public Sans', system-ui, sans-serif",
-        background: 'rgba(0,0,0,.5)',
+        padding: 20,
+        fontFamily: "'Pixelify Sans', sans-serif",
+        background: 'rgba(10,8,20,0.55)',
         backdropFilter: 'blur(2px)',
+        WebkitBackdropFilter: 'blur(2px)',
         animation: 'frpgDialogFade .15s ease',
       }}
     >
@@ -63,41 +63,50 @@ export default function ConfirmDialog({
       `}</style>
       <div
         style={{
+          ...glassDark,
+          ...roundCorners,
           width: '100%',
           maxWidth: 440,
-          background: t.surface,
-          border: `1px solid ${t.border}`,
-          borderRadius: 14,
-          boxShadow: t.cardShadow,
           padding: 24,
+          color: '#ffffff',
           animation: 'frpgDialogZoom .15s ease',
         }}
       >
         {/* Header */}
-        <h2 id="confirm-title" style={{ margin: 0, fontSize: 18, fontWeight: 700, color: t.ink }}>
+        <h2
+          id="confirm-title"
+          style={{ margin: 0, fontSize: 20, fontWeight: 700, color: hudColors.gold, textShadow: glassTextShadow }}
+        >
           {title}
         </h2>
         {description && (
-          <p id="confirm-desc" style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.5, color: t.soft }}>
+          <p
+            id="confirm-desc"
+            style={{ margin: '10px 0 0', fontSize: 15, lineHeight: 1.5, color: '#ffffff', textShadow: glassTextShadow }}
+          >
             {description}
           </p>
         )}
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
           <button
             type="button"
             onClick={onCancel}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.16)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
             style={{
               fontFamily: 'inherit',
-              fontSize: 14,
-              fontWeight: 600,
-              padding: '9px 16px',
-              borderRadius: 8,
+              fontSize: 15,
+              fontWeight: 700,
+              padding: '11px 20px',
+              borderRadius: 10,
               cursor: 'pointer',
-              background: t.surface,
-              border: `1px solid ${t.border}`,
-              color: t.ink,
+              background: 'rgba(255,255,255,0.08)',
+              border: '1.5px solid rgba(255,255,255,0.3)',
+              color: '#ffffff',
+              textShadow: glassTextShadow,
+              transition: 'background .08s',
             }}
           >
             {cancelLabel}
@@ -106,18 +115,16 @@ export default function ConfirmDialog({
             ref={actionRef}
             type="button"
             onClick={onConfirm}
-            onMouseEnter={(e) => (e.currentTarget.style.background = actionHover)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = actionBg)}
             style={{
               fontFamily: 'inherit',
-              fontSize: 14,
-              fontWeight: 600,
-              padding: '9px 16px',
-              borderRadius: 8,
+              fontSize: 15,
+              fontWeight: 700,
+              padding: '11px 22px',
+              borderRadius: 10,
               cursor: 'pointer',
               background: actionBg,
-              border: '1px solid transparent',
-              color: '#fff',
+              border: 'none',
+              color: actionInk,
             }}
           >
             {actionLabel}
