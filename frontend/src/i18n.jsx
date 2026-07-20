@@ -94,6 +94,10 @@ const strings = {
 
     // Adventure map
     'map.return': 'Return',
+    'map.restart': 'Restart',
+    'map.restart.title': 'Restart the map?',
+    'map.restart.desc': 'Your current progress and attempts will be lost.',
+    'map.restart.action': 'Restart',
     'map.legend.title': 'Legend',
     'map.attempts': 'attempts remaining',
     'map.q.submit': 'Submit',
@@ -203,6 +207,10 @@ const strings = {
 
     // Adventure map
     'map.return': 'Trở về',
+    'map.restart': 'Chơi lại',
+    'map.restart.title': 'Chơi lại bản đồ?',
+    'map.restart.desc': 'Tiến trình và lượt hiện tại của bạn sẽ mất.',
+    'map.restart.action': 'Chơi lại',
     'map.legend.title': 'Chú giải',
     'map.attempts': 'lượt còn lại',
     'map.q.submit': 'Gửi',

@@ -6,6 +6,7 @@ import { useWindowWidth, HUD_BREAKPOINT } from '../hooks/useWindowWidth'
 import { generateMap, SKILL_TYPES } from '../data/map'
 import { read as readProgress, write as writeProgress, MAX_ATTEMPTS } from '../data/mapProgress'
 import QuestionModal from '../components/QuestionModal'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { fetchExercise } from '../api/exercise'
 import iconSpeech from '../assets/hud/icon-speech.png'
 import iconNote from '../assets/hud/icon-note.png'
@@ -139,6 +140,7 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
   const [current, setCurrent] = useState(saved?.current ?? startId) // "you are here"
   const [attempts, setAttempts] = useState(saved?.attempts ?? MAX_ATTEMPTS) // global pool
   const [hovered, setHovered] = useState(null)
+  const [confirmRestart, setConfirmRestart] = useState(false)
 
   // Persist progress whenever the current node or the attempt pool changes.
   useEffect(() => {
@@ -196,6 +198,14 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
       setAttempts(attempts - 1)
     }
     closeModal()
+  }
+
+  // Manual restart: same reset path as finishing/zero-attempts above, but
+  // player-triggered and guarded by a confirm prompt. Persisted via the effect.
+  const restart = () => {
+    setCurrent(startId)
+    setAttempts(MAX_ATTEMPTS)
+    setConfirmRestart(false)
   }
 
   const boxStyle = compact
@@ -278,6 +288,32 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
       }}
     >
       ← {tr('map.return')}
+    </button>
+  )
+
+  // Player-triggered restart. Mirrors the return button (bottom-right) with a
+  // rose accent to signal it's destructive; opens a confirm prompt before reset.
+  const restartBtn = (
+    <button
+      type="button"
+      onClick={() => setConfirmRestart(true)}
+      style={{
+        ...liquidGlass,
+        position: 'absolute',
+        bottom: 12,
+        right: 12,
+        fontFamily: 'inherit',
+        fontSize: 13.5,
+        fontWeight: 700,
+        color: '#ffffff',
+        textShadow: glassTextShadow,
+        border: `1px solid ${hudColors.rose}`,
+        borderRadius: 10,
+        padding: '9px 18px',
+        cursor: 'pointer',
+      }}
+    >
+      ↻ {tr('map.restart')}
     </button>
   )
 
@@ -376,6 +412,7 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
           </div>
           {lives}
           {returnBtn}
+          {restartBtn}
         </div>
       </div>
 
@@ -390,6 +427,17 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
           onClose={closeModal}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmRestart}
+        title={tr('map.restart.title')}
+        description={tr('map.restart.desc')}
+        cancelLabel={tr('common.cancel')}
+        actionLabel={tr('map.restart.action')}
+        destructive
+        onCancel={() => setConfirmRestart(false)}
+        onConfirm={restart}
+      />
     </HudLayout>
   )
 }
