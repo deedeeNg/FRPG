@@ -9,7 +9,7 @@ const gridStroke = (r) => `rgba(255,255,255,${ringAlpha[r] ?? 0.25})`
 /**
  * Attributes radar panel (right side of the HUD home). Dark-glass panel with a
  * gold "ATTRIBUTES" header over the reused {@link StatHexagon}, re-skinned to
- * the pixel-art HUD look (gold polygon on dark glass, white Pixelify labels).
+ * the pixel-art HUD look (gold polygon on dark glass, white Lowres Pixel labels).
  *   scores: { [attrKey]: 0..MAX_SCORE } — driven from user skill data.
  */
 export default function AttributesPanel({ scores }) {
@@ -52,7 +52,7 @@ export default function AttributesPanel({ scores }) {
           stroke={hudColors.gold}
           strokeWidth={2}
           labelColor="#ffffff"
-          labelFont="'Pixelify Sans', sans-serif"
+          labelFont="'Lowres Pixel', sans-serif"
           labelSize={11}
         />
       </div>

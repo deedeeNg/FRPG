@@ -24,7 +24,7 @@ export default function HudLayout({ activeRoute, onNavigate, onLogout, showXpBar
         minHeight: '100vh',
         overflowX: 'hidden',
         overflowY: 'auto',
-        fontFamily: "'Pixelify Sans', sans-serif",
+        fontFamily: "'Lowres Pixel', sans-serif",
         ...pixelated,
       }}
     >
@@ -32,8 +32,8 @@ export default function HudLayout({ activeRoute, onNavigate, onLogout, showXpBar
       <div
         style={
           compact
-            ? { position: 'relative', margin: 20 }
-            : { position: 'absolute', left: 20, right: 20, top: 20 }
+            ? { position: 'relative', zIndex: 20, margin: 20 }
+            : { position: 'absolute', zIndex: 20, left: 20, right: 20, top: 20 }
         }
       >
         <HudBar

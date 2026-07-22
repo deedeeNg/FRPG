@@ -57,7 +57,7 @@ export default function QuestionModal({ exercise, loading, error, attempts, fina
           width: '100%',
           maxWidth: 460,
           padding: 24,
-          fontFamily: "'Pixelify Sans', sans-serif",
+          fontFamily: "'Lowres Pixel', sans-serif",
           color: '#ffffff',
         }}
       >

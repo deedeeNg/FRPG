@@ -21,6 +21,8 @@ const strings = {
     'settings.theme.system': 'System',
     'settings.language': 'Language',
     'settings.language.hint': 'Choose the language for the interface.',
+    'settings.music': 'Music volume',
+    'settings.music.hint': 'Set the background music level. Slide to 0 to mute.',
 
     // Brand
     'brand.tagline': 'Learn French. Level up.',
@@ -134,6 +136,8 @@ const strings = {
     'settings.theme.system': 'Hệ thống',
     'settings.language': 'Ngôn ngữ',
     'settings.language.hint': 'Chọn ngôn ngữ cho giao diện.',
+    'settings.music': 'Âm lượng nhạc',
+    'settings.music.hint': 'Đặt mức nhạc nền. Kéo về 0 để tắt tiếng.',
 
     // Brand
     'brand.tagline': 'Học tiếng Pháp. Lên cấp.',

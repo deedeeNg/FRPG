@@ -10,7 +10,7 @@ import { attributes, attributeScores, MAX_SCORE } from '../data/stats'
  *
  * Colors default to the app theme (the FRP-9 home look); the style props below
  * let a caller re-skin it — e.g. the pixel-art HUD home screen renders it gold
- * on dark glass with white Pixelify labels. `gridStroke` may be a color string
+ * on dark glass with white Lowres Pixel labels. `gridStroke` may be a color string
  * or a function (ringIndex, ringCount) => color, where ringIndex 0 is innermost.
  */
 export default function StatHexagon({
