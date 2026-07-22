@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { ThemeProvider, useTheme } from './theme'
 import { LanguageProvider, useLanguage } from './i18n'
+import { MusicProvider } from './music'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Home from './pages/Home'
 import Map from './pages/Map'
+import Settings from './pages/Settings'
 import HudLayout from './components/HudLayout'
 import Background from './components/Background'
 import ConfirmDialog from './components/ConfirmDialog'
@@ -107,6 +109,12 @@ function Screen() {
           />
         ) : screen === 'map' ? (
           <Map activeRoute="map" onNavigate={setScreen} onLogout={onLogout} userId={session.userId} />
+        ) : screen === 'settings' ? (
+          <HudLayout activeRoute="settings" onNavigate={setScreen} onLogout={onLogout}>
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'center', padding: '140px 20px 40px' }}>
+              <Settings />
+            </div>
+          </HudLayout>
         ) : (
           <HudLayout activeRoute={screen} onNavigate={setScreen} onLogout={onLogout} />
         )}
@@ -209,7 +217,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <Screen />
+        <MusicProvider>
+          <Screen />
+        </MusicProvider>
       </LanguageProvider>
     </ThemeProvider>
   )

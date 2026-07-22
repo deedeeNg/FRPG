@@ -1,3 +1,12 @@
+/* Pixel-art UI font (replaces Pixelify Sans across the HUD). Bundled locally
+   from src/assets/fonts so it works offline and isn't a Google Fonts request. */
+@font-face {
+  font-family: 'Lowres Pixel';
+  src: url('./assets/fonts/LowresPixel-Regular.otf') format('opentype');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
 /* App-wide custom cursor: a baguette. The SVG is inlined as a base64 data URI
    so there's no extra asset request. 40x40 with the hotspot near the top-left
    tip; !important overrides the inline cursor:pointer on buttons so the baguette

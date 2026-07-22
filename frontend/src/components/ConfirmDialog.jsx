@@ -50,7 +50,7 @@ export default function ConfirmDialog({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
-        fontFamily: "'Pixelify Sans', sans-serif",
+        fontFamily: "'Lowres Pixel', sans-serif",
         background: 'rgba(10,8,20,0.55)',
         backdropFilter: 'blur(2px)',
         WebkitBackdropFilter: 'blur(2px)',
