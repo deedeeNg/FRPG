@@ -212,6 +212,14 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
     ? { padding: '0 20px 28px', boxSizing: 'border-box' }
     : { position: 'absolute', left: 20, right: 20, top: 116, bottom: 20 }
 
+  // Legend sizes scale down on compact viewports so the overlay stays a small
+  // corner chip instead of swallowing the (proportionally smaller) map frame.
+  const lg = compact
+    ? { pad: '7px 9px', gap: 4, minW: undefined, title: 10, item: 10.5, chip: 14, img: 8 }
+    : { pad: '12px 16px', gap: 8, minW: 148, title: 12, item: 12.5, chip: 18, img: 10 }
+
+  // Pinned to the top-right of the whole map area (mirrors the life bar top-left),
+  // sitting just below the HUD nav bar — not inside the map frame.
   const legend = (
     <div
       style={{
@@ -220,16 +228,17 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
         position: 'absolute',
         top: 12,
         right: 12,
-        padding: '12px 16px',
+        maxWidth: 'calc(100% - 24px)',
+        padding: lg.pad,
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
-        minWidth: 148,
+        gap: lg.gap,
+        minWidth: lg.minW,
       }}
     >
       <div
         style={{
-          fontSize: 12,
+          fontSize: lg.title,
           fontWeight: 700,
           color: hudColors.gold,
           letterSpacing: 1,
@@ -242,9 +251,9 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
       {SKILL_TYPES.map((key) => {
         const { icon, color, filter } = SKILL_STYLE[key]
         return (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#ffffff', textShadow: glassTextShadow }}>
-            <span style={{ width: 18, height: 18, flex: 'none', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={icon} alt="" style={{ ...pixelated, width: 10, height: 10, filter }} />
+          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: lg.gap, fontSize: lg.item, color: '#ffffff', textShadow: glassTextShadow }}>
+            <span style={{ width: lg.chip, height: lg.chip, flex: 'none', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={icon} alt="" style={{ ...pixelated, width: lg.img, height: lg.img, filter }} />
             </span>
             {tr('skill.' + key)}
           </div>
@@ -407,10 +416,10 @@ export default function Map({ activeRoute = 'map', onNavigate, onLogout, userId 
               >
                 {graph}
               </div>
-              {legend}
             </div>
           </div>
           {lives}
+          {legend}
           {returnBtn}
           {restartBtn}
         </div>

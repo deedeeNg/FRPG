@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useLanguage } from '../i18n'
 import { hudColors, roundCorners, liquidGlass, pixelated } from '../hud'
+import BrandLogo from './BrandLogo'
 
 // Keep white HUD text legible over the frosty, low-tint glass.
 const textShadow = '0 2px 0 rgba(43,36,64,0.55)'
 import knight from '../assets/hud/knight.png'
-import fleur from '../assets/hud/fleur.png'
 import iconHome from '../assets/hud/icon-home.png'
 import iconMap from '../assets/hud/icon-map.png'
 import iconGear from '../assets/hud/icon-gear.png'
@@ -111,8 +111,7 @@ export default function HudBar({ user, activeRoute, onNavigate, onLogout, showXp
           gap: 10,
         }}
       >
-        <img src={fleur} alt="" style={{ ...pixelated, width: 26, height: 26 }} />
-        <span style={{ fontFamily: "'Jacquard 12', serif", fontSize: 32, color: '#ffffff', letterSpacing: 4, textShadow }}>FRPG</span>
+        <BrandLogo />
       </div>
 
       {/* Nav — wraps when compact; labels collapse to icon-only to save room. */}

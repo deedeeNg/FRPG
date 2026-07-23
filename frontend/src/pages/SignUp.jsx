@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { useTheme } from '../theme'
 import { useLanguage } from '../i18n'
-import BrandMark from '../components/BrandMark'
+import BrandLogo from '../components/BrandLogo'
 import TextField from '../components/TextField'
 import SocialButton from '../components/SocialButton'
 import { providers } from '../data/providers'
 import { useHover } from '../hooks/useHover'
-import { liquidGlass, roundCorners, hudColors, glassTextShadow } from '../hud'
+import { glassDark, roundCorners, hudColors, glassTextShadow } from '../hud'
 
 /**
  * Sign-up screen. Mirrors Login; behavior injected via props:
@@ -15,7 +14,6 @@ import { liquidGlass, roundCorners, hudColors, glassTextShadow } from '../hud'
  *   onLogin()                      -> navigate to the login screen
  */
 export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = true }) {
-  const { theme: t } = useTheme()
   const { t: tr } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -62,18 +60,21 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
     }
   }
 
+  // Gold RPG call to action: dark ink text on the HUD gold, pixel-frame border
+  // like the HUD chips. Hover brightens to the XP-stripe highlight gold.
   const primaryBtn = {
     width: '100%',
+    boxSizing: 'border-box',
     fontFamily: 'inherit',
     fontSize: 15,
     fontWeight: 700,
-    color: '#FFFFFF',
-    background: hovered ? t.primaryHover : t.primary,
-    border: 'none',
+    color: hudColors.ink,
+    background: hovered ? hudColors.goldLight : hudColors.gold,
+    border: '2px solid rgba(255,255,255,0.6)',
     borderRadius: 12,
     padding: 14,
     cursor: 'pointer',
-    letterSpacing: '.01em',
+    letterSpacing: '.02em',
     transition: 'background .15s',
   }
 
@@ -92,22 +93,21 @@ export default function SignUp({ onSubmit, onProvider, onLogin, showSocial = tru
     <form onSubmit={submit} style={{ width: '100%', maxWidth: 412 }}>
       <div
         style={{
-          ...liquidGlass,
+          ...glassDark,
           ...roundCorners,
           padding: 'clamp(26px, 5.5vw, 40px)',
         }}
       >
-        <div style={{ marginBottom: 26 }}>
-          <BrandMark showTagline nameColor="#ffffff" taglineColor="rgba(255,255,255,0.85)" textShadow={glassTextShadow} />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 22 }}>
+          <BrandLogo fleurSize={40} fontSize={48} letterSpacing={5} gap={12} textShadow={glassTextShadow} />
         </div>
 
         <h1
           style={{
-            fontFamily: "'Bricolage Grotesque', sans-serif",
-            fontWeight: 700,
-            fontSize: 26,
+            fontFamily: "'Jacquard 12', serif",
+            fontWeight: 400,
+            fontSize: 30,
             margin: '0 0 4px',
-            letterSpacing: '-.01em',
             color: '#ffffff',
             textShadow: glassTextShadow,
           }}

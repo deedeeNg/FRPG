@@ -19,6 +19,7 @@ export default function TextField({
 
   const input = {
     width: '100%',
+    boxSizing: 'border-box',
     fontFamily: 'inherit',
     fontSize: 15,
     color: t.ink,

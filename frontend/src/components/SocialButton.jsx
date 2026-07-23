@@ -7,6 +7,7 @@ export default function SocialButton({ label, mark, markSize = 13, onClick, disa
 
   const btn = {
     width: '100%',
+    boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
